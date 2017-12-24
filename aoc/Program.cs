@@ -11,7 +11,39 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main10_2();
+			Main11_2();
+		}
+
+		static void Main11_2()
+		{
+			var input = File.ReadAllText(@"..\..\input11.txt").Trim();
+			var steps = input.Split(',');
+			var dirs = new[] { "n", "nw", "sw", "s", "se", "ne" };
+			var pos = new Coord(0, 0);
+			var max = 0;
+			foreach (var step in steps)
+			{
+				var dir = Array.IndexOf(dirs, step);
+				pos = pos.Neighbor(dir);
+				var dist = pos.DistanceTo(new Coord(0, 0));
+				if (dist > max)
+					max = dist;
+			}
+			Console.Out.WriteLine(max);
+		}
+
+		static void Main11()
+		{
+			var input = File.ReadAllText(@"..\..\input11.txt").Trim();
+			var steps = input.Split(',');
+			var dirs = new[] { "n", "nw", "sw", "s", "se", "ne" };
+			var pos = new Coord(0, 0);
+			foreach (var step in steps)
+			{
+				var dir = Array.IndexOf(dirs, step);
+				pos = pos.Neighbor(dir);
+			}
+			Console.Out.WriteLine(pos.DistanceTo(new Coord(0, 0)));
 		}
 
 		static void Main10_2()
