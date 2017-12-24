@@ -11,7 +11,76 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main11_2();
+			Main12_2();
+		}
+
+		static void Main12_2()
+		{
+			var lines = File.ReadAllLines(@"..\..\input12.txt");
+			var re = new Regex(@"^(?<id>\d+) <-> (?<link>\d+)(?:, (?<link>\d+))*$", RegexOptions.Compiled);
+			var gr = new Dictionary<int, int[]>();
+			foreach (var line in lines)
+			{
+				var match = re.Match(line);
+				if (!match.Success)
+					throw new InvalidOperationException(line);
+				var id = int.Parse(match.Groups["id"].Value);
+				var links = match.Groups["link"].Captures.Cast<Capture>().Select(x => int.Parse(x.Value)).ToArray();
+				gr[id] = links;
+			}
+			var totalUsed = new HashSet<int>();
+			var groupCount = 0;
+			foreach (var start in gr.Keys)
+			{
+				if (!totalUsed.Add(start))
+					continue;
+				groupCount++;
+				var used = new HashSet<int>();
+				var queue = new Queue<int>();
+				queue.Enqueue(start);
+				used.Add(start);
+				while (queue.Count > 0)
+				{
+					var cur = queue.Dequeue();
+					foreach (var link in gr[cur])
+					{
+						if (used.Add(link))
+							queue.Enqueue(link);
+					}
+				}
+				totalUsed.UnionWith(used);
+			}
+			Console.Out.WriteLine(groupCount);
+		}
+
+		static void Main12()
+		{
+			var lines = File.ReadAllLines(@"..\..\input12.txt");
+			var re = new Regex(@"^(?<id>\d+) <-> (?<link>\d+)(?:, (?<link>\d+))*$", RegexOptions.Compiled);
+			var gr = new Dictionary<int, int[]>();
+			foreach (var line in lines)
+			{
+				var match = re.Match(line);
+				if (!match.Success)
+					throw new InvalidOperationException(line);
+				var id = int.Parse(match.Groups["id"].Value);
+				var links = match.Groups["link"].Captures.Cast<Capture>().Select(x => int.Parse(x.Value)).ToArray();
+				gr[id] = links;
+			}
+			var used = new HashSet<int>();
+			var queue = new Queue<int>();
+			queue.Enqueue(0);
+			used.Add(0);
+			while (queue.Count > 0)
+			{
+				var cur = queue.Dequeue();
+				foreach (var link in gr[cur])
+				{
+					if (used.Add(link))
+						queue.Enqueue(link);
+				}
+			}
+			Console.Out.WriteLine(used.Count);
 		}
 
 		static void Main11_2()
