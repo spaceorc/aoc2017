@@ -11,7 +11,127 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main12_2();
+			Main14_2();
+		}
+
+		static void Main14_2()
+		{
+			var input = "hxtvlmkl";
+			var grid = new int[128, 128];
+			for (int y = 0; y < 128; y++)
+			{
+				var hash = KnotHash(input + "-" + y);
+				for (var hi = 0; hi < hash.Length; hi++)
+				{
+					var c = hash[hi];
+					var x = hi * 8 + 7;
+					while (c > 0)
+					{
+						if (c % 2 == 1)
+							grid[x, y] = 1;
+						c >>= 1;
+						x--;
+					}
+				}
+			}
+
+			var result = 0;
+			for (int x = 0; x < 128; x++)
+			{
+				for (int y = 0; y < 128; y++)
+				{
+					if (grid[x, y] == 1)
+					{
+						result++;
+						var queue = new Queue<(int x, int y)>();
+						queue.Enqueue((x, y));
+						grid[x, y] = 0;
+						while (queue.Count > 0)
+						{
+							var cur = queue.Dequeue();
+							var d = new (int dx, int dy)[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
+							foreach (var (dx, dy) in d)
+							{
+								if (cur.x + dx >= 0 && cur.x + dx < 128 
+									&& cur.y + dy >= 0 && cur.y + dy < 128)
+								{
+									if (grid[cur.x + dx, cur.y + dy] == 1)
+									{
+										grid[cur.x + dx, cur.y + dy] = 0;
+										queue.Enqueue((cur.x + dx, cur.y + dy));
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			Console.Out.WriteLine(result);
+		}
+
+		static void Main14()
+		{
+			var input = "hxtvlmkl";
+			var result = 0;
+			for (int i = 0; i < 128; i++)
+			{
+				var hash = KnotHash(input + "-" + i);
+				foreach (var h in hash)
+				{
+					var c = h;
+					while (c > 0)
+					{
+						if (c % 2 == 1)
+							result++;
+						c >>= 1;
+					}
+				}
+			}
+			Console.Out.WriteLine(result);
+		}
+
+		static void Main13_2()
+		{
+			var lines = File.ReadAllLines(@"..\..\input13.txt");
+			var scanners = new(int level, int depth)[lines.Length];
+			var forbidTimes = new bool[10000000];
+			for (var i = 0; i < lines.Length; i++)
+			{
+				var line = lines[i];
+				var split = line.Split(new[] { ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+				var level = int.Parse(split[0]);
+				var depth = int.Parse(split[1]);
+				scanners[i] = (level, depth);
+				for (int t = 0; t < forbidTimes.Length + level; t += depth * 2 - 2)
+				{
+					if (t - level >= 0)
+						forbidTimes[t - level] = true;
+				}
+			}
+			for (int i = 0; i < forbidTimes.Length; i++)
+			{
+				if (!forbidTimes[i])
+				{
+					Console.Out.WriteLine(i);
+					return;
+				}
+			}
+		}
+
+		static void Main13()
+		{
+			var lines = File.ReadAllLines(@"..\..\input13.txt");
+			var sev = 0;
+			foreach (var line in lines)
+			{
+				var split = line.Split(new[] { ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+				var level = int.Parse(split[0]);
+				var depth = int.Parse(split[1]);
+				var pos = level % (depth * 2 - 2);
+				if (pos == 0)
+					sev += level * depth;
+			}
+			Console.Out.WriteLine(sev);
 		}
 
 		static void Main12_2()
@@ -118,7 +238,22 @@ namespace aoc
 		static void Main10_2()
 		{
 			var input = "187,254,0,81,169,219,1,190,19,102,255,56,46,32,2,216";
-			var lens = input.Select(c => (int)c).Concat(new []{ 17, 31, 73, 47, 23 }).ToArray();
+			var knotHash = KnotHash(input);
+			var res = KnotHashToString(knotHash);
+			Console.Out.WriteLine(res);
+		}
+
+		private static string KnotHashToString(byte[] dense)
+		{
+			var res = "";
+			foreach (var d in dense)
+				res += d.ToString("x2");
+			return res;
+		}
+
+		private static byte[] KnotHash(string input)
+		{
+			var lens = input.Select(c => (int)c).Concat(new[] { 17, 31, 73, 47, 23 }).ToArray();
 			var skip = 0;
 			var cur = 0;
 			var list = Enumerable.Range(0, 256).ToArray();
@@ -136,18 +271,13 @@ namespace aoc
 					skip++;
 				}
 			}
-			var dense = new int[16];
+			var dense = new byte[16];
 			for (int i = 0; i < 16; i++)
 			{
 				for (int k = 0; k < 16; k++)
-					dense[i] ^= list[i * 16 + k];
+					dense[i] ^= (byte)list[i * 16 + k];
 			}
-			var res = "";
-			foreach (var d in dense)
-			{
-				res += d.ToString("x2");
-			}
-			Console.Out.WriteLine(res);
+			return dense;
 		}
 
 		static void Main10()
@@ -159,7 +289,7 @@ namespace aoc
 			var list = Enumerable.Range(0, 256).ToArray();
 			foreach (var len in lens)
 			{
-				for (int i = 0; i < len/2; i++)
+				for (int i = 0; i < len / 2; i++)
 				{
 					var tmp = list[(cur + i) % list.Length];
 					list[(cur + i) % list.Length] = list[(cur + len - 1 - i) % list.Length];
@@ -444,7 +574,7 @@ namespace aoc
 			{
 				var weights = nodes[n].children
 					.GroupBy(c => totalWeights[c])
-					.Select(x => new{w = x.Key, cnt = x.Count()})
+					.Select(x => new { w = x.Key, cnt = x.Count() })
 					.ToList();
 				if (weights.Count <= 1)
 					return (null, 0);
@@ -619,7 +749,7 @@ namespace aoc
 			bool IsValid(string l)
 			{
 				var used = new HashSet<string>();
-				var words = l.Split(new[]{' '}, StringSplitOptions.RemoveEmptyEntries);
+				var words = l.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 				return words.All(w => used.Add(new string(w.OrderBy(x => x).ToArray())));
 			}
 
@@ -638,7 +768,7 @@ namespace aoc
 			bool IsValid(string l)
 			{
 				var used = new HashSet<string>();
-				var words = l.Split(new[]{' '}, StringSplitOptions.RemoveEmptyEntries);
+				var words = l.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 				return words.All(w => used.Add(w));
 			}
 
@@ -703,7 +833,7 @@ namespace aoc
 				}
 				Set(x, y, res);
 			}
-			
+
 			Console.Out.WriteLine(res);
 		}
 
