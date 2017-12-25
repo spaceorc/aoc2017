@@ -11,7 +11,43 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main14_2();
+			Main15_2();
+		}
+
+		static void Main15_2()
+		{
+			var a = 703L;
+			var b = 516L;
+			var result = 0;
+			for (int i = 0; i < 5_000_000; i++)
+			{
+				do
+				{
+					a = a * 16807L % 2147483647L;
+				} while ((a & 0b11) != 0);
+				do
+				{
+					b = b * 48271L % 2147483647L;
+				} while ((b & 0b111) != 0);
+				if ((a & 0b1111111111111111) == (b & 0b1111111111111111))
+					result++;
+			}
+			Console.Out.WriteLine(result);
+		}
+
+		static void Main15()
+		{
+			var a = 703L;
+			var b = 516L;
+			var result = 0;
+			for (int i = 0; i < 40_000_000; i++)
+			{
+				a = a * 16807L % 2147483647L;
+				b = b * 48271L % 2147483647L;
+				if ((a & 0b1111111111111111) == (b & 0b1111111111111111))
+					result++;
+			}
+			Console.Out.WriteLine(result);
 		}
 
 		static void Main14_2()
