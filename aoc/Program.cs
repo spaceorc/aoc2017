@@ -11,7 +11,37 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main16_2();
+			Main17_2();
+		}
+
+		static void Main17_2()
+		{
+			var input = 345;
+			var cur = 0;
+			var result = 0;
+			for (int count = 1; count <= 50_000_000; count++)
+			{
+				cur = (cur + input + 1) % count;
+				if (cur == 0)
+					cur = count;
+				if (cur == 1)
+					result = count;
+			}
+			Console.Out.WriteLine(result);
+		}
+
+		static void Main17()
+		{
+			var input = 345;
+			var buffer = new List<int> {0};
+			var cur = 0;
+			for (int i = 1; i <= 2017; i++)
+			{
+				cur = (cur + input + 1) % buffer.Count;
+				buffer.Insert(cur, i);
+			}
+			cur = (cur + 1) % buffer.Count;
+			Console.Out.WriteLine(buffer[cur]);
 		}
 
 		static void Main16_2()
