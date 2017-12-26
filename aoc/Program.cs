@@ -11,7 +11,152 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main17_2();
+			Main18_2();
+		}
+
+		static void Main18_2()
+		{
+			var input = File.ReadLines(@"..\..\input18.txt");
+			var commands = input
+				.Select(s => s.Split(' '))
+				.Select<string[], (string cmd, char r, long v, char argr, long argv)>(
+					x => (x[0],
+					!int.TryParse(x[1], out _) ? x[1][0] : '\0',
+					int.TryParse(x[1], out var v) ? v : 0,
+					x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
+					x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
+			var regs = new[] { new ConcurrentDictionary<char, long>(), new ConcurrentDictionary<char, long>() };
+			regs[0]['p'] = 0;
+			regs[1]['p'] = 1;
+			var queues = new[] { new Queue<long>(), new Queue<long>() };
+			var c = new long[] { 0, 0 };
+			var locked = new[] { false, false };
+			var terminated = new[] { false, false };
+			var deadlocked = false;
+			var p = 0;
+			var result = 0;
+			while (!deadlocked && (!terminated[0] || !terminated[1]))
+			{
+				while (c[p] >= 0 && c[p] < commands.Length && !deadlocked && !terminated[p])
+				{
+					var cmd = commands[c[p]];
+					var v = cmd.r != '\0' ? regs[p].GetOrAdd(cmd.r, 0) : cmd.v;
+					var argv = cmd.argr != '\0' ? regs[p].GetOrAdd(cmd.argr, 0) : cmd.argv;
+					switch (cmd.cmd)
+					{
+						case "snd":
+							queues[1 - p].Enqueue(v);
+							locked[1 - p] = false;
+							c[p]++;
+							if (p == 1)
+								result++;
+							break;
+						case "set":
+							regs[p][cmd.r] = argv;
+							c[p]++;
+							break;
+						case "add":
+							regs[p][cmd.r] = v + argv;
+							c[p]++;
+							break;
+						case "mul":
+							regs[p][cmd.r] = v * argv;
+							c[p]++;
+							break;
+						case "mod":
+							regs[p][cmd.r] = v % argv;
+							c[p]++;
+							break;
+						case "rcv":
+							if (locked[p])
+								deadlocked = true;
+							else if (queues[p].Count > 0)
+							{
+								regs[p][cmd.r] = queues[p].Dequeue();
+								c[p]++;
+							}
+							else
+							{
+								locked[p] = true;
+								p = 1 - p;
+							}
+							break;
+						case "jgz":
+							if (v > 0)
+								c[p] += argv;
+							else
+								c[p]++;
+							break;
+						default:
+							throw new InvalidOperationException(cmd.cmd);
+					}
+				}
+				terminated[p] = true;
+				p = 1 - p;
+			}
+			Console.Out.WriteLine(result);
+		}
+
+		static void Main18()
+		{
+			var input = File.ReadLines(@"..\..\input18.txt");
+			var commands = input
+				.Select(s => s.Split(' '))
+				.Select<string[], (string cmd, char r, long v, char argr, long argv)>(
+					x => (x[0],
+					!int.TryParse(x[1], out _) ? x[1][0] : '\0',
+					int.TryParse(x[1], out var v) ? v : 0,
+					x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
+					x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
+			var regs = new ConcurrentDictionary<char, long>();
+			long snd = 0;
+			long c = 0;
+			while (c >= 0 && c < commands.Length)
+			{
+				var cmd = commands[c];
+				Console.Out.WriteLine($"{c}: {cmd.cmd}");
+				var v = cmd.r != '\0' ? regs.GetOrAdd(cmd.r, 0) : cmd.v;
+				var argv = cmd.argr != '\0' ? regs.GetOrAdd(cmd.argr, 0) : cmd.argv;
+				switch (cmd.cmd)
+				{
+					case "snd":
+						snd = v;
+						c++;
+						break;
+					case "set":
+						regs[cmd.r] = argv;
+						c++;
+						break;
+					case "add":
+						regs[cmd.r] = v + argv;
+						c++;
+						break;
+					case "mul":
+						regs[cmd.r] = v * argv;
+						c++;
+						break;
+					case "mod":
+						regs[cmd.r] = v % argv;
+						c++;
+						break;
+					case "rcv":
+						if (v != 0)
+						{
+							Console.Out.WriteLine(snd);
+							return;
+						}
+						c++;
+						break;
+					case "jgz":
+						if (v > 0)
+							c += argv;
+						else
+							c++;
+						break;
+					default:
+						throw new InvalidOperationException(cmd.cmd);
+				}
+			}
 		}
 
 		static void Main17_2()
@@ -33,7 +178,7 @@ namespace aoc
 		static void Main17()
 		{
 			var input = 345;
-			var buffer = new List<int> {0};
+			var buffer = new List<int> { 0 };
 			var cur = 0;
 			for (int i = 1; i <= 2017; i++)
 			{
