@@ -11,7 +11,123 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main19_2();
+			Main20_2();
+		}
+
+		static void Main20_2()
+		{
+			var lines = File.ReadAllLines(@"..\..\input20.txt");
+			var particles = new List<(int n, int x, int y, int z, int vx, int vy, int vz, int ax, int ay, int az)>();
+			for (var i = 0; i < lines.Length; i++)
+			{
+				var line = lines[i];
+				var split = line.Split(new[] { "p=<", "v=<", "a=<", ">", ",", " " }, StringSplitOptions.RemoveEmptyEntries)
+					.Select(int.Parse).ToArray();
+				particles.Add((i, split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7], split[8]));
+			}
+			var intersections = new Dictionary<(int n1, int n2), long[]>();
+			for (int i = 0; i < particles.Count - 1; i++)
+			{
+				var p0 = particles[i];
+				for (int j = i + 1; j < particles.Count; j++)
+				{
+					var p1 = particles[j];
+					var xtimes = GetIntersectionTimes(p0.x, p1.x, p0.vx, p1.vx, p0.ax, p1.ax);
+					var ytimes = GetIntersectionTimes(p0.y, p1.y, p0.vy, p1.vy, p0.ay, p1.ay);
+					var ztimes = GetIntersectionTimes(p0.z, p1.z, p0.vz, p1.vz, p0.az, p1.az);
+					xtimes = xtimes ?? ytimes ?? ztimes;
+					ytimes = ytimes ?? xtimes ?? ztimes;
+					ztimes = ztimes ?? xtimes ?? ytimes;
+					if (xtimes == null)
+					{
+						intersections.Add((i, j), new[] { 0L });
+						intersections.Add((j, i), new[] { 0L });
+					}
+					else
+					{
+						var times = xtimes.Intersect(ytimes).Intersect(ztimes).ToArray();
+						if (times.Any())
+						{
+							intersections.Add((i, j), times);
+							intersections.Add((j, i), times);
+						}
+					}
+				}
+			}
+
+			var removed = new Dictionary<int, long>();
+			foreach (var g in intersections.SelectMany(x => x.Value.Select(v => new { pair = x.Key, time = v })).GroupBy(x => x.time).OrderBy(g => g.Key))
+			{
+				var time = g.Key;
+				foreach (var kvp in g)
+				{
+					var (n1, n2) = kvp.pair;
+					if ((!removed.TryGetValue(n1, out var time1) || time1 == time)
+						&& (!removed.TryGetValue(n2, out var time2) || time2 == time))
+					{
+						removed[n1] = time;
+						removed[n2] = time;
+					}
+				}
+			}
+			Console.Out.WriteLine(particles.Count - removed.Count);
+
+			List<long> GetIntersectionTimes(int x0, int x1, int v0, int v1, int a0, int a1)
+			{
+				var a = a0 - a1;
+				var b = 2 * (v0 - v1) + a;
+				var c = 2 * (x0 - x1);
+				if (a == 0)
+				{
+					if (c == 0)
+						return null;
+					if (b == 0)
+						return new List<long>();
+					if (c % b == 0 && -c / b >= 0)
+						return new List<long> { -c / b };
+					return new List<long>();
+				}
+
+				var d = (long)b * b - 4L * a * c;
+				if (d < 0)
+					return new List<long>();
+				if (d == 0)
+				{
+					if (-b % (2*a) == 0 && -b / (2 * a) >= 0)
+						return new List<long> { -b / (2 * a) };
+					return new List<long>();
+				}
+				var sqt = (long)Math.Round(Math.Sqrt(d));
+				if (sqt * sqt == d)
+				{
+					var result = new List<long>();
+					if ((-b + sqt) % (2*a) == 0 && (-b + sqt) / (2 * a) >= 0)
+						result.Add((-b + sqt) / (2 * a));
+					if ((-b - sqt) % (2 * a) == 0 && (-b - sqt) / (2 * a) >= 0)
+						result.Add((-b - sqt) / (2 * a));
+					return result;
+				}
+				return new List<long>();
+			}
+		}
+
+		static void Main20()
+		{
+			var lines = File.ReadAllLines(@"..\..\input20.txt");
+			var particles = new List<(int n, int x, int y, int z, int vx, int vy, int vz, int ax, int ay, int az)>();
+			for (var i = 0; i < lines.Length; i++)
+			{
+				var line = lines[i];
+				var split = line.Split(new[] { "p=<", "v=<", "a=<", ">", ",", " " }, StringSplitOptions.RemoveEmptyEntries)
+					.Select(int.Parse).ToArray();
+				particles.Add((i, split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7], split[8]));
+			}
+			var result = particles
+				.OrderBy(p => Math.Abs(p.ax) + Math.Abs(p.ay) + Math.Abs(p.az))
+				.ThenBy(p => Math.Abs(p.vx) + Math.Abs(p.vy) + Math.Abs(p.vz))
+				.ThenBy(p => Math.Abs(p.x) + Math.Abs(p.y) + Math.Abs(p.z))
+				.First();
+			Console.Out.WriteLine(result.n);
 		}
 
 		static void Main19_2()

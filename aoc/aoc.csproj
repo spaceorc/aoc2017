@@ -53,6 +53,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="input20.txt" />
     <Content Include="input19.txt" />
     <Content Include="input18.txt" />
     <Content Include="input16.txt" />
