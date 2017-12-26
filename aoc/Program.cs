@@ -11,7 +11,119 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main15_2();
+			Main16_2();
+		}
+
+		static void Main16_2()
+		{
+			var input = File.ReadAllText(@"..\..\input16.txt").Trim();
+			var commandS = input.Split(',');
+			var commands = new(char cmd, int arg0, int arg1, char carg0, char carg1)[commandS.Length];
+			for (var ci = 0; ci < commandS.Length; ci++)
+			{
+				var c = commandS[ci];
+				switch (c[0])
+				{
+					case 's':
+						var i = int.Parse(c.Substring(1));
+						commands[ci] = (c[0], i, 0, '\0', '\0');
+						break;
+					case 'x':
+						var s = c.Substring(1).Split('/');
+						var i1 = int.Parse(s[0]);
+						var i2 = int.Parse(s[1]);
+						commands[ci] = (c[0], i1, i2, '\0', '\0');
+						break;
+					case 'p':
+						s = c.Substring(1).Split('/');
+						commands[ci] = (c[0], 0, 0, s[0][0], s[1][0]);
+						break;
+					default:
+						throw new InvalidOperationException(c);
+				}
+			}
+			var programs = "abcdefghijklmnop".ToCharArray();
+			var indexes = Enumerable.Range(0, 16).ToArray();
+			var start = 0;
+			for (var cc = 0; cc < 1_000_000_000; cc++)
+			{
+				for (var ci = 0; ci < commands.Length; ci++)
+				{
+					var c = commands[ci];
+					switch (c.cmd)
+					{
+						case 's':
+							start = (start + 16 - c.arg0) % 16;
+							break;
+						case 'x':
+							var i1 = (c.arg0 + start) % 16;
+							var i2 = (c.arg1 + start) % 16;
+							var ti = indexes[programs[i1] - 'a'];
+							indexes[programs[i1] - 'a'] = indexes[programs[i2] - 'a'];
+							indexes[programs[i2] - 'a'] = ti;
+							var t = programs[i1];
+							programs[i1] = programs[i2];
+							programs[i2] = t;
+							break;
+						case 'p':
+							i1 = c.carg0 - 'a';
+							i2 = c.carg1 - 'a';
+							t = programs[indexes[i1]];
+							programs[indexes[i1]] = programs[indexes[i2]];
+							programs[indexes[i2]] = t;
+							ti = indexes[i1];
+							indexes[i1] = indexes[i2];
+							indexes[i2] = ti;
+							break;
+						default:
+							throw new InvalidOperationException(c.ToString());
+					}
+				}
+				if (new string(programs.Skip(start).Concat(programs.Take(start)).ToArray()) == "abcdefghijklmnop")
+				{
+					var cycle = cc + 1;
+					Console.Out.WriteLine("cycle = " + cycle);
+					cc += (1_000_000_000 / cycle - 1) * cycle;
+				}
+			}
+			Console.Out.WriteLine(new string(programs.Skip(start).Concat(programs.Take(start)).ToArray()));
+		}
+
+		static void Main16()
+		{
+			var input = File.ReadAllText(@"..\..\input16.txt").Trim();
+			var commands = input.Split(',');
+			var programs = "abcdefghijklmnop".ToCharArray();
+			var start = 0;
+			foreach (var c in commands)
+			{
+				switch (c[0])
+				{
+					case 's':
+						var i = int.Parse(c.Substring(1));
+						start = (start + 16 - i) % 16;
+						break;
+					case 'x':
+						var s = c.Substring(1).Split('/');
+						var i1 = (int.Parse(s[0]) + start) % 16;
+						var i2 = (int.Parse(s[1]) + start) % 16;
+						var t = programs[i1];
+						programs[i1] = programs[i2];
+						programs[i2] = t;
+						break;
+					case 'p':
+						s = c.Substring(1).Split('/');
+						i1 = Array.IndexOf(programs, s[0][0]);
+						i2 = Array.IndexOf(programs, s[1][0]);
+						t = programs[i1];
+						programs[i1] = programs[i2];
+						programs[i2] = t;
+						break;
+					default:
+						throw new InvalidOperationException(c);
+				}
+			}
+			Console.Out.WriteLine(new string(programs.Skip(start).Concat(programs.Take(start)).ToArray()));
 		}
 
 		static void Main15_2()
@@ -85,10 +197,10 @@ namespace aoc
 						while (queue.Count > 0)
 						{
 							var cur = queue.Dequeue();
-							var d = new (int dx, int dy)[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
+							var d = new(int dx, int dy)[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
 							foreach (var (dx, dy) in d)
 							{
-								if (cur.x + dx >= 0 && cur.x + dx < 128 
+								if (cur.x + dx >= 0 && cur.x + dx < 128
 									&& cur.y + dy >= 0 && cur.y + dy < 128)
 								{
 									if (grid[cur.x + dx, cur.y + dy] == 1)
