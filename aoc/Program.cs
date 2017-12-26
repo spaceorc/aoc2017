@@ -11,7 +11,123 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main18_2();
+			Main19_2();
+		}
+
+		static void Main19_2()
+		{
+			var input = File.ReadAllLines(@"..\..\input19.txt");
+			var x = input[0].IndexOf('|');
+			var y = 0;
+			var dir = 0;
+			var d = new(int dx, int dy)[]
+			{
+				 (0, 1),
+				 (-1, 0),
+				 (0, -1),
+				 (1, 0)
+			};
+			var result = 0;
+			bool done = false;
+			while (!done)
+			{
+				result++;
+				switch (input[y][x])
+				{
+					case ' ':
+						done = true;
+						break;
+					case '|':
+					case '-':
+						x = x + d[dir].dx;
+						y = y + d[dir].dy;
+						break;
+					case '+':
+						var nd = (dir + 1) % d.Length;
+						for (int i = 0; i < 2; i++)
+						{
+							var nx = x + d[nd].dx;
+							var ny = y + d[nd].dy;
+							if (input[ny][nx] != ' ')
+							{
+								x = nx;
+								y = ny;
+								dir = nd;
+								break;
+							}
+							nd = (nd + 2) % d.Length;
+						}
+						break;
+					default:
+						if (input[y][x] >= 'A' && input[y][x] <= 'Z')
+						{
+							x = x + d[dir].dx;
+							y = y + d[dir].dy;
+							break;
+						}
+						else
+							throw new InvalidOperationException();
+				}
+			}
+			Console.Out.WriteLine(result - 1);
+		}
+
+		static void Main19()
+		{
+			var input = File.ReadAllLines(@"..\..\input19.txt");
+			var x = input[0].IndexOf('|');
+			var y = 0;
+			var dir = 0;
+			var d = new(int dx, int dy)[]
+			{
+				 (0, 1),
+				 (-1, 0),
+				 (0, -1),
+				 (1, 0)
+			};
+			var result = "";
+			bool done = false;
+			while (!done)
+			{
+				switch (input[y][x])
+				{
+					case ' ':
+						done = true;
+						break;
+					case '|':
+					case '-':
+						x = x + d[dir].dx;
+						y = y + d[dir].dy;
+						break;
+					case '+':
+						var nd = (dir + 1) % d.Length;
+						for (int i = 0; i < 2; i++)
+						{
+							var nx = x + d[nd].dx;
+							var ny = y + d[nd].dy;
+							if (input[ny][nx] != ' ')
+							{
+								x = nx;
+								y = ny;
+								dir = nd;
+								break;
+							}
+							nd = (nd + 2) % d.Length;
+						}
+						break;
+					default:
+						if (input[y][x] >= 'A' && input[y][x] <= 'Z')
+						{
+							result += input[y][x];
+							x = x + d[dir].dx;
+							y = y + d[dir].dy;
+							break;
+						}
+						else
+							throw new InvalidOperationException();
+				}
+			}
+			Console.Out.WriteLine(result);
 		}
 
 		static void Main18_2()
