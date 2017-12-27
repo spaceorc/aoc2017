@@ -11,7 +11,67 @@ namespace aoc
 	{
 		private static void Main()
 		{
-			Main24_2();
+			Main25();
+		}
+
+		private static void Main25()
+		{
+			var diag = 12134527;
+			var states = new[]
+			{
+				// A
+				new []
+				{
+					new {write = 1, move = 1, state = 'B'}, // if 0
+					new {write = 0, move = -1, state = 'C'}  // if 1
+				},
+				// B
+				new []
+				{
+					new {write = 1, move = -1, state = 'A'}, // if 0
+					new {write = 1, move = 1, state = 'C'}  // if 1
+				},
+				// C
+				new []
+				{
+					new {write = 1, move = 1, state = 'A'}, // if 0
+					new {write = 0, move = -1, state = 'D'}  // if 1
+				},
+				// D
+				new []
+				{
+					new {write = 1, move = -1, state = 'E'}, // if 0
+					new {write = 1, move = -1, state = 'C'}  // if 1
+				},
+				// E
+				new []
+				{
+					new {write = 1, move = 1, state = 'F'}, // if 0
+					new {write = 1, move = 1, state = 'A'}  // if 1
+				},
+				// F
+				new []
+				{
+					new {write = 1, move = 1, state = 'A'}, // if 0
+					new {write = 1, move = 1, state = 'E'}  // if 1
+				},
+			};
+			var s = 'A';
+			var c = 0;
+			var values = new HashSet<int>();
+			for (int i = 0; i < diag; i++)
+			{
+				var v = values.Contains(c) ? 1 : 0;
+				var state = states[s - 'A'][v];
+				if (state.write == 0)
+					values.Remove(c);
+				else
+					values.Add(c);
+				c += state.move;
+				s = state.state;
+			}
+
+			Console.Out.WriteLine(values.Count);
 		}
 
 		private static void Main24_2()
