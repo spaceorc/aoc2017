@@ -11,7 +11,103 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main21_2();
+			Main23();
+		}
+
+		static void Main23()
+		{
+		}
+
+		static void Main22_2()
+		{
+			var lines = File.ReadAllLines(@"..\..\input22.txt");
+			var map = new Dictionary<(long x,long y), int>();
+			for (int yy = 0; yy < lines.Length; yy++)
+			for (int xx = 0; xx < lines[0].Length; xx++)
+			{
+				if (lines[yy][xx] == '#')
+					map.Add((xx, yy), 2);
+			}
+			long x = lines[0].Length / 2;
+			long y = lines.Length / 2;
+			var dir = 0;
+			var dirs = new (long dx, long dy)[]
+			{
+				(0, -1),
+				(1, 0),
+				(0, 1),
+				(-1, 0),
+			};
+			var result = 0;
+			for (int i = 0; i < 10_000_000; i++)
+			{
+				int value;
+				map.TryGetValue((x, y), out value);
+				switch (value)
+				{
+					case 0:
+						dir = (dir + 3) % dirs.Length;
+						break;
+					case 1:
+						break;
+					case 2:
+						dir = (dir + 1) % dirs.Length;
+						break;
+					case 3:
+						dir = (dir + 2) % dirs.Length;
+						break;
+				}
+				value = (value + 1)%4;
+				if (value == 0)
+					map.Remove((x, y));
+				else
+					map[(x, y)] = value;
+				if (value == 2)
+					result++;
+				x += dirs[dir].dx;
+				y += dirs[dir].dy;
+			}
+			Console.Out.WriteLine(result);
+		}
+
+		static void Main22()
+		{
+			var lines = File.ReadAllLines(@"..\..\input22.txt");
+			var map = new HashSet<(long x,long y)>();
+			for (int yy = 0; yy < lines.Length; yy++)
+			for (int xx = 0; xx < lines[0].Length; xx++)
+			{
+				if (lines[yy][xx] == '#')
+					map.Add((xx, yy));
+			}
+			long x = lines[0].Length / 2;
+			long y = lines.Length / 2;
+			var dir = 0;
+			var dirs = new (long dx, long dy)[]
+			{
+				(0, -1),
+				(1, 0),
+				(0, 1),
+				(-1, 0),
+			};
+			var result = 0;
+			for (int i = 0; i < 10000; i++)
+			{
+				if (map.Contains((x, y)))
+				{
+					dir = (dir + 1) % dirs.Length;
+					map.Remove((x, y));
+				}
+				else
+				{
+					dir = (dir + 3) % dirs.Length;
+					map.Add((x, y));
+					result++;
+				}
+				x += dirs[dir].dx;
+				y += dirs[dir].dy;
+			}
+			Console.Out.WriteLine(result);
 		}
 
 		static void Main21_2()
