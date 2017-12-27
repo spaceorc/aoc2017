@@ -7,39 +7,106 @@ using System.Text.RegularExpressions;
 
 namespace aoc
 {
-	class Program
+	internal class Program
 	{
-		static void Main()
+		private static void Main()
 		{
-			Main23();
+			Main23_2();
 		}
 
-		static void Main23()
+		private static void Main23_2()
 		{
+			long Run()
+			{
+				long b = 93 * 100 + 100_000;
+				long result = 0;
+				for (int i = 0; i <= 1000; i++, b += 17)
+				{
+					bool f = false;
+					for (int d = 2; d < b/2; d++)
+					{
+						if (b % d == 0)
+						{
+							f = true;
+							break;
+						}
+					}
+					if (f)
+						result++;
+				}
+				return result;
+			}
+
+			Console.Out.WriteLine(Run());
 		}
 
-		static void Main22_2()
+		private static void Main23()
+		{
+			var input = File.ReadLines(@"..\..\input23.txt");
+			var commands = input
+				.Select(s => s.Split(' '))
+				.Select<string[], (string cmd, char r, long v, char argr, long argv)>(
+					x => (x[0],
+						!int.TryParse(x[1], out _) ? x[1][0] : '\0',
+						int.TryParse(x[1], out var v) ? v : 0,
+						x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
+						x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
+			var regs = new ConcurrentDictionary<char, long>();
+			long c = 0;
+			long res = 0;
+			while (c >= 0 && c < commands.Length)
+			{
+				var cmd = commands[c];
+				var v = cmd.r != '\0' ? regs.GetOrAdd(cmd.r, 0) : cmd.v;
+				var argv = cmd.argr != '\0' ? regs.GetOrAdd(cmd.argr, 0) : cmd.argv;
+				switch (cmd.cmd)
+				{
+					case "set":
+						regs[cmd.r] = argv;
+						c++;
+						break;
+					case "sub":
+						regs[cmd.r] = v - argv;
+						c++;
+						break;
+					case "mul":
+						regs[cmd.r] = v * argv;
+						res++;
+						c++;
+						break;
+					case "jnz":
+						if (v != 0)
+							c += argv;
+						else
+							c++;
+						break;
+					default:
+						throw new InvalidOperationException(cmd.cmd);
+				}
+			}
+			Console.Out.WriteLine(res);
+		}
+
+		private static void Main22_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input22.txt");
-			var map = new Dictionary<(long x,long y), int>();
-			for (int yy = 0; yy < lines.Length; yy++)
-			for (int xx = 0; xx < lines[0].Length; xx++)
-			{
+			var map = new Dictionary<(long x, long y), int>();
+			for (var yy = 0; yy < lines.Length; yy++)
+			for (var xx = 0; xx < lines[0].Length; xx++)
 				if (lines[yy][xx] == '#')
 					map.Add((xx, yy), 2);
-			}
 			long x = lines[0].Length / 2;
 			long y = lines.Length / 2;
 			var dir = 0;
-			var dirs = new (long dx, long dy)[]
+			var dirs = new(long dx, long dy)[]
 			{
 				(0, -1),
 				(1, 0),
 				(0, 1),
-				(-1, 0),
+				(-1, 0)
 			};
 			var result = 0;
-			for (int i = 0; i < 10_000_000; i++)
+			for (var i = 0; i < 10_000_000; i++)
 			{
 				int value;
 				map.TryGetValue((x, y), out value);
@@ -57,7 +124,7 @@ namespace aoc
 						dir = (dir + 2) % dirs.Length;
 						break;
 				}
-				value = (value + 1)%4;
+				value = (value + 1) % 4;
 				if (value == 0)
 					map.Remove((x, y));
 				else
@@ -70,28 +137,26 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main22()
+		private static void Main22()
 		{
 			var lines = File.ReadAllLines(@"..\..\input22.txt");
-			var map = new HashSet<(long x,long y)>();
-			for (int yy = 0; yy < lines.Length; yy++)
-			for (int xx = 0; xx < lines[0].Length; xx++)
-			{
+			var map = new HashSet<(long x, long y)>();
+			for (var yy = 0; yy < lines.Length; yy++)
+			for (var xx = 0; xx < lines[0].Length; xx++)
 				if (lines[yy][xx] == '#')
 					map.Add((xx, yy));
-			}
 			long x = lines[0].Length / 2;
 			long y = lines.Length / 2;
 			var dir = 0;
-			var dirs = new (long dx, long dy)[]
+			var dirs = new(long dx, long dy)[]
 			{
 				(0, -1),
 				(1, 0),
 				(0, 1),
-				(-1, 0),
+				(-1, 0)
 			};
 			var result = 0;
-			for (int i = 0; i < 10000; i++)
+			for (var i = 0; i < 10000; i++)
 			{
 				if (map.Contains((x, y)))
 				{
@@ -110,91 +175,71 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main21_2()
+		private static void Main21_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input21.txt");
 			var patterns = new SortedDictionary<bool[,], bool[,]>(Comparer<bool[,]>.Create(Compare));
 			foreach (var line in lines)
 			{
-				var split = line.Split(new[] { " => " }, StringSplitOptions.None);
+				var split = line.Split(new[] {" => "}, StringSplitOptions.None);
 				var source = Normalize(Parse(split[0]));
 				var target = Parse(split[1]);
 				patterns.Add(source, target);
 			}
 			var current = Parse(".#./..#/###");
-			for (int i = 0; i < 18; i++)
-			{
+			for (var i = 0; i < 18; i++)
 				current = Join(Split(current)
 					.Select(s => patterns[s]).ToList());
-			}
 			var r = 0;
-			for (int i = 0; i < current.GetLength(0); i++)
-			{
-				for (int j = 0; j < current.GetLength(1); j++)
-				{
-					if (current[i, j])
-						r++;
-				}
-			}
+			for (var i = 0; i < current.GetLength(0); i++)
+			for (var j = 0; j < current.GetLength(1); j++)
+				if (current[i, j])
+					r++;
 			Console.Out.WriteLine(r);
 
 			void Print(bool[,] rows)
 			{
-				for (int i = 0; i < rows.GetLength(0); i++)
+				for (var i = 0; i < rows.GetLength(0); i++)
 				{
-					for (int j = 0; j < rows.GetLength(0); j++)
-					{
+					for (var j = 0; j < rows.GetLength(0); j++)
 						Console.Out.Write(rows[i, j] ? '#' : '.');
-					}
 					Console.Out.WriteLine();
 				}
 			}
 
 			bool[,] Join(List<bool[,]> rowses)
 			{
-				var size = (int)Math.Round(Math.Sqrt(rowses.Count));
+				var size = (int) Math.Round(Math.Sqrt(rowses.Count));
 				var result = new bool[size * rowses[0].GetLength(0), size * rowses[0].GetLength(0)];
-				for (int i = 0; i < size; i++)
-					for (int j = 0; j < size; j++)
-					{
-						for (int ii = 0; ii < rowses[0].GetLength(0); ii++)
-							for (int jj = 0; jj < rowses[0].GetLength(0); jj++)
-							{
-								result[i * rowses[0].GetLength(0) + ii,
-										j * rowses[0].GetLength(0) + jj] = rowses[i * size + j][ii, jj];
-							}
-					}
+				for (var i = 0; i < size; i++)
+				for (var j = 0; j < size; j++)
+				for (var ii = 0; ii < rowses[0].GetLength(0); ii++)
+				for (var jj = 0; jj < rowses[0].GetLength(0); jj++)
+					result[i * rowses[0].GetLength(0) + ii,
+						j * rowses[0].GetLength(0) + jj] = rowses[i * size + j][ii, jj];
 				return result;
 			}
 
 			List<bool[,]> Split(bool[,] rows)
 			{
-				List<bool[,]> result = new List<bool[,]>();
+				var result = new List<bool[,]>();
 				if (rows.GetLength(0) % 2 == 0)
-				{
-					for (int i = 0; i < rows.GetLength(0); i += 2)
-						for (int j = 0; j < rows.GetLength(0); j += 2)
+					for (var i = 0; i < rows.GetLength(0); i += 2)
+					for (var j = 0; j < rows.GetLength(0); j += 2)
+						result.Add(Normalize(new[,]
 						{
-							result.Add(Normalize(new[,]
-							{
-								{rows[i, j], rows[i, j + 1]},
-								{rows[i + 1, j], rows[i + 1, j + 1]}
-							}));
-						}
-				}
+							{rows[i, j], rows[i, j + 1]},
+							{rows[i + 1, j], rows[i + 1, j + 1]}
+						}));
 				else
-				{
-					for (int i = 0; i < rows.GetLength(0); i += 3)
-						for (int j = 0; j < rows.GetLength(0); j += 3)
+					for (var i = 0; i < rows.GetLength(0); i += 3)
+					for (var j = 0; j < rows.GetLength(0); j += 3)
+						result.Add(Normalize(new[,]
 						{
-							result.Add(Normalize(new[,]
-							{
-								{rows[i, j], rows[i, j + 1], rows[i, j + 2]},
-								{rows[i+1, j], rows[i+1, j + 1], rows[i+1, j + 2]},
-								{rows[i+2, j], rows[i+2, j + 1], rows[i+2, j + 2]}
-							}));
-						}
-				}
+							{rows[i, j], rows[i, j + 1], rows[i, j + 2]},
+							{rows[i + 1, j], rows[i + 1, j + 1], rows[i + 1, j + 2]},
+							{rows[i + 2, j], rows[i + 2, j + 1], rows[i + 2, j + 2]}
+						}));
 				return result;
 			}
 
@@ -202,10 +247,10 @@ namespace aoc
 			{
 				var res = rows;
 				bool[,] min = null;
-				for (int i = 0; i < 2; i++)
+				for (var i = 0; i < 2; i++)
 				{
 					res = Flip(res);
-					for (int j = 0; j < 4; j++)
+					for (var j = 0; j < 4; j++)
 					{
 						res = Rotate(res);
 						if (min == null || Compare(res, min) < 0)
@@ -222,35 +267,31 @@ namespace aoc
 				if (a.Length > b.Length)
 					return 1;
 				var comparer = Comparer<bool>.Default;
-				for (int i = 0; i < a.GetLength(0); i++)
-					for (int j = 0; j < a.GetLength(0); j++)
-					{
-						var compare = comparer.Compare(a[i, j], b[i, j]);
-						if (compare != 0)
-							return compare;
-					}
+				for (var i = 0; i < a.GetLength(0); i++)
+				for (var j = 0; j < a.GetLength(0); j++)
+				{
+					var compare = comparer.Compare(a[i, j], b[i, j]);
+					if (compare != 0)
+						return compare;
+				}
 				return 0;
 			}
 
 			bool[,] Rotate(bool[,] rows)
 			{
 				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
-				for (int i = 0; i < rows.GetLength(0); i++)
-					for (int j = 0; j < rows.GetLength(0); j++)
-					{
-						res[i, j] = rows[j, rows.GetLength(0) - i - 1];
-					}
+				for (var i = 0; i < rows.GetLength(0); i++)
+				for (var j = 0; j < rows.GetLength(0); j++)
+					res[i, j] = rows[j, rows.GetLength(0) - i - 1];
 				return res;
 			}
 
 			bool[,] Flip(bool[,] rows)
 			{
 				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
-				for (int i = 0; i < rows.GetLength(0); i++)
-					for (int j = 0; j < rows.GetLength(0); j++)
-					{
-						res[i, j] = rows[i, rows.GetLength(0) - j - 1];
-					}
+				for (var i = 0; i < rows.GetLength(0); i++)
+				for (var j = 0; j < rows.GetLength(0); j++)
+					res[i, j] = rows[i, rows.GetLength(0) - j - 1];
 				return res;
 			}
 
@@ -258,29 +299,27 @@ namespace aoc
 			{
 				var rows = source.Split('/');
 				var res = new bool[rows.Length, rows.Length];
-				for (int i = 0; i < rows.Length; i++)
-					for (int j = 0; j < rows.Length; j++)
-					{
-						res[i, j] = rows[i][j] == '#';
-					}
+				for (var i = 0; i < rows.Length; i++)
+				for (var j = 0; j < rows.Length; j++)
+					res[i, j] = rows[i][j] == '#';
 				return res;
 			}
 		}
 
-		static void Main21()
+		private static void Main21()
 		{
 			var lines = File.ReadAllLines(@"..\..\input21.txt");
 			var patterns = new SortedDictionary<bool[,], bool[,]>(Comparer<bool[,]>.Create(Compare));
 			foreach (var line in lines)
 			{
-				var split = line.Split(new[] { " => " }, StringSplitOptions.None);
+				var split = line.Split(new[] {" => "}, StringSplitOptions.None);
 				var source = Normalize(Parse(split[0]));
 				var target = Parse(split[1]);
 				patterns.Add(source, target);
 			}
 			var current = Parse(".#./..#/###");
 			Print(current);
-			for (int i = 0; i < 5; i++)
+			for (var i = 0; i < 5; i++)
 			{
 				current = Join(Split(current)
 					.Select(s => patterns[s]).ToList());
@@ -288,73 +327,55 @@ namespace aoc
 				Print(current);
 			}
 			var r = 0;
-			for (int i = 0; i < current.GetLength(0); i++)
-			{
-				for (int j = 0; j < current.GetLength(1); j++)
-				{
-					if (current[i, j])
-						r++;
-				}
-			}
+			for (var i = 0; i < current.GetLength(0); i++)
+			for (var j = 0; j < current.GetLength(1); j++)
+				if (current[i, j])
+					r++;
 			Console.Out.WriteLine(r);
 
 			void Print(bool[,] rows)
 			{
-				for (int i = 0; i < rows.GetLength(0); i++)
+				for (var i = 0; i < rows.GetLength(0); i++)
 				{
-					for (int j = 0; j < rows.GetLength(0); j++)
-					{
+					for (var j = 0; j < rows.GetLength(0); j++)
 						Console.Out.Write(rows[i, j] ? '#' : '.');
-					}
 					Console.Out.WriteLine();
 				}
 			}
 
 			bool[,] Join(List<bool[,]> rowses)
 			{
-				var size = (int)Math.Round(Math.Sqrt(rowses.Count));
+				var size = (int) Math.Round(Math.Sqrt(rowses.Count));
 				var result = new bool[size * rowses[0].GetLength(0), size * rowses[0].GetLength(0)];
-				for (int i = 0; i < size; i++)
-					for (int j = 0; j < size; j++)
-					{
-						for (int ii = 0; ii < rowses[0].GetLength(0); ii++)
-							for (int jj = 0; jj < rowses[0].GetLength(0); jj++)
-							{
-								result[i * rowses[0].GetLength(0) + ii,
-										j * rowses[0].GetLength(0) + jj] = rowses[i * size + j][ii, jj];
-							}
-					}
+				for (var i = 0; i < size; i++)
+				for (var j = 0; j < size; j++)
+				for (var ii = 0; ii < rowses[0].GetLength(0); ii++)
+				for (var jj = 0; jj < rowses[0].GetLength(0); jj++)
+					result[i * rowses[0].GetLength(0) + ii,
+						j * rowses[0].GetLength(0) + jj] = rowses[i * size + j][ii, jj];
 				return result;
 			}
 
 			List<bool[,]> Split(bool[,] rows)
 			{
-				List<bool[,]> result = new List<bool[,]>();
+				var result = new List<bool[,]>();
 				if (rows.GetLength(0) % 2 == 0)
-				{
-					for (int i = 0; i < rows.GetLength(0); i += 2)
-						for (int j = 0; j < rows.GetLength(0); j += 2)
+					for (var i = 0; i < rows.GetLength(0); i += 2)
+					for (var j = 0; j < rows.GetLength(0); j += 2)
+						result.Add(Normalize(new[,]
 						{
-							result.Add(Normalize(new[,]
-							{
-								{rows[i, j], rows[i, j + 1]},
-								{rows[i + 1, j], rows[i + 1, j + 1]}
-							}));
-						}
-				}
+							{rows[i, j], rows[i, j + 1]},
+							{rows[i + 1, j], rows[i + 1, j + 1]}
+						}));
 				else
-				{
-					for (int i = 0; i < rows.GetLength(0); i += 3)
-						for (int j = 0; j < rows.GetLength(0); j += 3)
+					for (var i = 0; i < rows.GetLength(0); i += 3)
+					for (var j = 0; j < rows.GetLength(0); j += 3)
+						result.Add(Normalize(new[,]
 						{
-							result.Add(Normalize(new[,]
-							{
-								{rows[i, j], rows[i, j + 1], rows[i, j + 2]},
-								{rows[i+1, j], rows[i+1, j + 1], rows[i+1, j + 2]},
-								{rows[i+2, j], rows[i+2, j + 1], rows[i+2, j + 2]}
-							}));
-						}
-				}
+							{rows[i, j], rows[i, j + 1], rows[i, j + 2]},
+							{rows[i + 1, j], rows[i + 1, j + 1], rows[i + 1, j + 2]},
+							{rows[i + 2, j], rows[i + 2, j + 1], rows[i + 2, j + 2]}
+						}));
 				return result;
 			}
 
@@ -362,10 +383,10 @@ namespace aoc
 			{
 				var res = rows;
 				bool[,] min = null;
-				for (int i = 0; i < 2; i++)
+				for (var i = 0; i < 2; i++)
 				{
 					res = Flip(res);
-					for (int j = 0; j < 4; j++)
+					for (var j = 0; j < 4; j++)
 					{
 						res = Rotate(res);
 						if (min == null || Compare(res, min) < 0)
@@ -382,35 +403,31 @@ namespace aoc
 				if (a.Length > b.Length)
 					return 1;
 				var comparer = Comparer<bool>.Default;
-				for (int i = 0; i < a.GetLength(0); i++)
-					for (int j = 0; j < a.GetLength(0); j++)
-					{
-						var compare = comparer.Compare(a[i, j], b[i, j]);
-						if (compare != 0)
-							return compare;
-					}
+				for (var i = 0; i < a.GetLength(0); i++)
+				for (var j = 0; j < a.GetLength(0); j++)
+				{
+					var compare = comparer.Compare(a[i, j], b[i, j]);
+					if (compare != 0)
+						return compare;
+				}
 				return 0;
 			}
 
 			bool[,] Rotate(bool[,] rows)
 			{
 				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
-				for (int i = 0; i < rows.GetLength(0); i++)
-					for (int j = 0; j < rows.GetLength(0); j++)
-					{
-						res[i, j] = rows[j, rows.GetLength(0) - i - 1];
-					}
+				for (var i = 0; i < rows.GetLength(0); i++)
+				for (var j = 0; j < rows.GetLength(0); j++)
+					res[i, j] = rows[j, rows.GetLength(0) - i - 1];
 				return res;
 			}
 
 			bool[,] Flip(bool[,] rows)
 			{
 				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
-				for (int i = 0; i < rows.GetLength(0); i++)
-					for (int j = 0; j < rows.GetLength(0); j++)
-					{
-						res[i, j] = rows[i, rows.GetLength(0) - j - 1];
-					}
+				for (var i = 0; i < rows.GetLength(0); i++)
+				for (var j = 0; j < rows.GetLength(0); j++)
+					res[i, j] = rows[i, rows.GetLength(0) - j - 1];
 				return res;
 			}
 
@@ -418,31 +435,29 @@ namespace aoc
 			{
 				var rows = source.Split('/');
 				var res = new bool[rows.Length, rows.Length];
-				for (int i = 0; i < rows.Length; i++)
-					for (int j = 0; j < rows.Length; j++)
-					{
-						res[i, j] = rows[i][j] == '#';
-					}
+				for (var i = 0; i < rows.Length; i++)
+				for (var j = 0; j < rows.Length; j++)
+					res[i, j] = rows[i][j] == '#';
 				return res;
 			}
 		}
 
-		static void Main20_2()
+		private static void Main20_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input20.txt");
 			var particles = new List<(int n, int x, int y, int z, int vx, int vy, int vz, int ax, int ay, int az)>();
 			for (var i = 0; i < lines.Length; i++)
 			{
 				var line = lines[i];
-				var split = line.Split(new[] { "p=<", "v=<", "a=<", ">", ",", " " }, StringSplitOptions.RemoveEmptyEntries)
+				var split = line.Split(new[] {"p=<", "v=<", "a=<", ">", ",", " "}, StringSplitOptions.RemoveEmptyEntries)
 					.Select(int.Parse).ToArray();
 				particles.Add((i, split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7], split[8]));
 			}
 			var intersections = new Dictionary<(int n1, int n2), long[]>();
-			for (int i = 0; i < particles.Count - 1; i++)
+			for (var i = 0; i < particles.Count - 1; i++)
 			{
 				var p0 = particles[i];
-				for (int j = i + 1; j < particles.Count; j++)
+				for (var j = i + 1; j < particles.Count; j++)
 				{
 					var p1 = particles[j];
 					var xtimes = GetIntersectionTimes(p0.x, p1.x, p0.vx, p1.vx, p0.ax, p1.ax);
@@ -453,8 +468,8 @@ namespace aoc
 					ztimes = ztimes ?? xtimes ?? ytimes;
 					if (xtimes == null)
 					{
-						intersections.Add((i, j), new[] { 0L });
-						intersections.Add((j, i), new[] { 0L });
+						intersections.Add((i, j), new[] {0L});
+						intersections.Add((j, i), new[] {0L});
 					}
 					else
 					{
@@ -469,14 +484,15 @@ namespace aoc
 			}
 
 			var removed = new Dictionary<int, long>();
-			foreach (var g in intersections.SelectMany(x => x.Value.Select(v => new { pair = x.Key, time = v })).GroupBy(x => x.time).OrderBy(g => g.Key))
+			foreach (var g in intersections.SelectMany(x => x.Value.Select(v => new {pair = x.Key, time = v}))
+				.GroupBy(x => x.time).OrderBy(g => g.Key))
 			{
 				var time = g.Key;
 				foreach (var kvp in g)
 				{
 					var (n1, n2) = kvp.pair;
 					if ((!removed.TryGetValue(n1, out var time1) || time1 == time)
-						&& (!removed.TryGetValue(n2, out var time2) || time2 == time))
+					    && (!removed.TryGetValue(n2, out var time2) || time2 == time))
 					{
 						removed[n1] = time;
 						removed[n2] = time;
@@ -497,20 +513,20 @@ namespace aoc
 					if (b == 0)
 						return new List<long>();
 					if (c % b == 0 && -c / b >= 0)
-						return new List<long> { -c / b };
+						return new List<long> {-c / b};
 					return new List<long>();
 				}
 
-				var d = (long)b * b - 4L * a * c;
+				var d = (long) b * b - 4L * a * c;
 				if (d < 0)
 					return new List<long>();
 				if (d == 0)
 				{
 					if (-b % (2 * a) == 0 && -b / (2 * a) >= 0)
-						return new List<long> { -b / (2 * a) };
+						return new List<long> {-b / (2 * a)};
 					return new List<long>();
 				}
-				var sqt = (long)Math.Round(Math.Sqrt(d));
+				var sqt = (long) Math.Round(Math.Sqrt(d));
 				if (sqt * sqt == d)
 				{
 					var result = new List<long>();
@@ -524,14 +540,14 @@ namespace aoc
 			}
 		}
 
-		static void Main20()
+		private static void Main20()
 		{
 			var lines = File.ReadAllLines(@"..\..\input20.txt");
 			var particles = new List<(int n, int x, int y, int z, int vx, int vy, int vz, int ax, int ay, int az)>();
 			for (var i = 0; i < lines.Length; i++)
 			{
 				var line = lines[i];
-				var split = line.Split(new[] { "p=<", "v=<", "a=<", ">", ",", " " }, StringSplitOptions.RemoveEmptyEntries)
+				var split = line.Split(new[] {"p=<", "v=<", "a=<", ">", ",", " "}, StringSplitOptions.RemoveEmptyEntries)
 					.Select(int.Parse).ToArray();
 				particles.Add((i, split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7], split[8]));
 			}
@@ -543,7 +559,7 @@ namespace aoc
 			Console.Out.WriteLine(result.n);
 		}
 
-		static void Main19_2()
+		private static void Main19_2()
 		{
 			var input = File.ReadAllLines(@"..\..\input19.txt");
 			var x = input[0].IndexOf('|');
@@ -551,13 +567,13 @@ namespace aoc
 			var dir = 0;
 			var d = new(int dx, int dy)[]
 			{
-				 (0, 1),
-				 (-1, 0),
-				 (0, -1),
-				 (1, 0)
+				(0, 1),
+				(-1, 0),
+				(0, -1),
+				(1, 0)
 			};
 			var result = 0;
-			bool done = false;
+			var done = false;
 			while (!done)
 			{
 				result++;
@@ -573,7 +589,7 @@ namespace aoc
 						break;
 					case '+':
 						var nd = (dir + 1) % d.Length;
-						for (int i = 0; i < 2; i++)
+						for (var i = 0; i < 2; i++)
 						{
 							var nx = x + d[nd].dx;
 							var ny = y + d[nd].dy;
@@ -595,13 +611,15 @@ namespace aoc
 							break;
 						}
 						else
+						{
 							throw new InvalidOperationException();
+						}
 				}
 			}
 			Console.Out.WriteLine(result - 1);
 		}
 
-		static void Main19()
+		private static void Main19()
 		{
 			var input = File.ReadAllLines(@"..\..\input19.txt");
 			var x = input[0].IndexOf('|');
@@ -609,15 +627,14 @@ namespace aoc
 			var dir = 0;
 			var d = new(int dx, int dy)[]
 			{
-				 (0, 1),
-				 (-1, 0),
-				 (0, -1),
-				 (1, 0)
+				(0, 1),
+				(-1, 0),
+				(0, -1),
+				(1, 0)
 			};
 			var result = "";
-			bool done = false;
+			var done = false;
 			while (!done)
-			{
 				switch (input[y][x])
 				{
 					case ' ':
@@ -630,7 +647,7 @@ namespace aoc
 						break;
 					case '+':
 						var nd = (dir + 1) % d.Length;
-						for (int i = 0; i < 2; i++)
+						for (var i = 0; i < 2; i++)
 						{
 							var nx = x + d[nd].dx;
 							var ny = y + d[nd].dy;
@@ -653,30 +670,31 @@ namespace aoc
 							break;
 						}
 						else
+						{
 							throw new InvalidOperationException();
+						}
 				}
-			}
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main18_2()
+		private static void Main18_2()
 		{
 			var input = File.ReadLines(@"..\..\input18.txt");
 			var commands = input
 				.Select(s => s.Split(' '))
 				.Select<string[], (string cmd, char r, long v, char argr, long argv)>(
 					x => (x[0],
-					!int.TryParse(x[1], out _) ? x[1][0] : '\0',
-					int.TryParse(x[1], out var v) ? v : 0,
-					x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
-					x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
-			var regs = new[] { new ConcurrentDictionary<char, long>(), new ConcurrentDictionary<char, long>() };
+						!int.TryParse(x[1], out _) ? x[1][0] : '\0',
+						int.TryParse(x[1], out var v) ? v : 0,
+						x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
+						x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
+			var regs = new[] {new ConcurrentDictionary<char, long>(), new ConcurrentDictionary<char, long>()};
 			regs[0]['p'] = 0;
 			regs[1]['p'] = 1;
-			var queues = new[] { new Queue<long>(), new Queue<long>() };
-			var c = new long[] { 0, 0 };
-			var locked = new[] { false, false };
-			var terminated = new[] { false, false };
+			var queues = new[] {new Queue<long>(), new Queue<long>()};
+			var c = new long[] {0, 0};
+			var locked = new[] {false, false};
+			var terminated = new[] {false, false};
 			var deadlocked = false;
 			var p = 0;
 			var result = 0;
@@ -714,7 +732,9 @@ namespace aoc
 							break;
 						case "rcv":
 							if (locked[p])
+							{
 								deadlocked = true;
+							}
 							else if (queues[p].Count > 0)
 							{
 								regs[p][cmd.r] = queues[p].Dequeue();
@@ -742,17 +762,17 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main18()
+		private static void Main18()
 		{
 			var input = File.ReadLines(@"..\..\input18.txt");
 			var commands = input
 				.Select(s => s.Split(' '))
 				.Select<string[], (string cmd, char r, long v, char argr, long argv)>(
 					x => (x[0],
-					!int.TryParse(x[1], out _) ? x[1][0] : '\0',
-					int.TryParse(x[1], out var v) ? v : 0,
-					x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
-					x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
+						!int.TryParse(x[1], out _) ? x[1][0] : '\0',
+						int.TryParse(x[1], out var v) ? v : 0,
+						x.Length > 2 && !int.TryParse(x[2], out _) ? x[2][0] : '\0',
+						x.Length > 2 && int.TryParse(x[2], out var num) ? num : 0)).ToArray();
 			var regs = new ConcurrentDictionary<char, long>();
 			long snd = 0;
 			long c = 0;
@@ -804,12 +824,12 @@ namespace aoc
 			}
 		}
 
-		static void Main17_2()
+		private static void Main17_2()
 		{
 			var input = 345;
 			var cur = 0;
 			var result = 0;
-			for (int count = 1; count <= 50_000_000; count++)
+			for (var count = 1; count <= 50_000_000; count++)
 			{
 				cur = (cur + input + 1) % count;
 				if (cur == 0)
@@ -820,12 +840,12 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main17()
+		private static void Main17()
 		{
 			var input = 345;
-			var buffer = new List<int> { 0 };
+			var buffer = new List<int> {0};
 			var cur = 0;
-			for (int i = 1; i <= 2017; i++)
+			for (var i = 1; i <= 2017; i++)
 			{
 				cur = (cur + input + 1) % buffer.Count;
 				buffer.Insert(cur, i);
@@ -834,7 +854,7 @@ namespace aoc
 			Console.Out.WriteLine(buffer[cur]);
 		}
 
-		static void Main16_2()
+		private static void Main16_2()
 		{
 			var input = File.ReadAllText(@"..\..\input16.txt").Trim();
 			var commandS = input.Split(',');
@@ -909,14 +929,13 @@ namespace aoc
 			Console.Out.WriteLine(new string(programs.Skip(start).Concat(programs.Take(start)).ToArray()));
 		}
 
-		static void Main16()
+		private static void Main16()
 		{
 			var input = File.ReadAllText(@"..\..\input16.txt").Trim();
 			var commands = input.Split(',');
 			var programs = "abcdefghijklmnop".ToCharArray();
 			var start = 0;
 			foreach (var c in commands)
-			{
 				switch (c[0])
 				{
 					case 's':
@@ -942,16 +961,15 @@ namespace aoc
 					default:
 						throw new InvalidOperationException(c);
 				}
-			}
 			Console.Out.WriteLine(new string(programs.Skip(start).Concat(programs.Take(start)).ToArray()));
 		}
 
-		static void Main15_2()
+		private static void Main15_2()
 		{
 			var a = 703L;
 			var b = 516L;
 			var result = 0;
-			for (int i = 0; i < 5_000_000; i++)
+			for (var i = 0; i < 5_000_000; i++)
 			{
 				do
 				{
@@ -967,12 +985,12 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main15()
+		private static void Main15()
 		{
 			var a = 703L;
 			var b = 516L;
 			var result = 0;
-			for (int i = 0; i < 40_000_000; i++)
+			for (var i = 0; i < 40_000_000; i++)
 			{
 				a = a * 16807L % 2147483647L;
 				b = b * 48271L % 2147483647L;
@@ -982,11 +1000,11 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main14_2()
+		private static void Main14_2()
 		{
 			var input = "hxtvlmkl";
 			var grid = new int[128, 128];
-			for (int y = 0; y < 128; y++)
+			for (var y = 0; y < 128; y++)
 			{
 				var hash = KnotHash(input + "-" + y);
 				for (var hi = 0; hi < hash.Length; hi++)
@@ -1004,44 +1022,36 @@ namespace aoc
 			}
 
 			var result = 0;
-			for (int x = 0; x < 128; x++)
-			{
-				for (int y = 0; y < 128; y++)
+			for (var x = 0; x < 128; x++)
+			for (var y = 0; y < 128; y++)
+				if (grid[x, y] == 1)
 				{
-					if (grid[x, y] == 1)
+					result++;
+					var queue = new Queue<(int x, int y)>();
+					queue.Enqueue((x, y));
+					grid[x, y] = 0;
+					while (queue.Count > 0)
 					{
-						result++;
-						var queue = new Queue<(int x, int y)>();
-						queue.Enqueue((x, y));
-						grid[x, y] = 0;
-						while (queue.Count > 0)
-						{
-							var cur = queue.Dequeue();
-							var d = new(int dx, int dy)[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
-							foreach (var (dx, dy) in d)
-							{
-								if (cur.x + dx >= 0 && cur.x + dx < 128
-									&& cur.y + dy >= 0 && cur.y + dy < 128)
+						var cur = queue.Dequeue();
+						var d = new(int dx, int dy)[] {(-1, 0), (1, 0), (0, -1), (0, 1)};
+						foreach (var (dx, dy) in d)
+							if (cur.x + dx >= 0 && cur.x + dx < 128
+							    && cur.y + dy >= 0 && cur.y + dy < 128)
+								if (grid[cur.x + dx, cur.y + dy] == 1)
 								{
-									if (grid[cur.x + dx, cur.y + dy] == 1)
-									{
-										grid[cur.x + dx, cur.y + dy] = 0;
-										queue.Enqueue((cur.x + dx, cur.y + dy));
-									}
+									grid[cur.x + dx, cur.y + dy] = 0;
+									queue.Enqueue((cur.x + dx, cur.y + dy));
 								}
-							}
-						}
 					}
 				}
-			}
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main14()
+		private static void Main14()
 		{
 			var input = "hxtvlmkl";
 			var result = 0;
-			for (int i = 0; i < 128; i++)
+			for (var i = 0; i < 128; i++)
 			{
 				var hash = KnotHash(input + "-" + i);
 				foreach (var h in hash)
@@ -1058,7 +1068,7 @@ namespace aoc
 			Console.Out.WriteLine(result);
 		}
 
-		static void Main13_2()
+		private static void Main13_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input13.txt");
 			var scanners = new(int level, int depth)[lines.Length];
@@ -1066,33 +1076,29 @@ namespace aoc
 			for (var i = 0; i < lines.Length; i++)
 			{
 				var line = lines[i];
-				var split = line.Split(new[] { ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+				var split = line.Split(new[] {' ', ':'}, StringSplitOptions.RemoveEmptyEntries);
 				var level = int.Parse(split[0]);
 				var depth = int.Parse(split[1]);
 				scanners[i] = (level, depth);
-				for (int t = 0; t < forbidTimes.Length + level; t += depth * 2 - 2)
-				{
+				for (var t = 0; t < forbidTimes.Length + level; t += depth * 2 - 2)
 					if (t - level >= 0)
 						forbidTimes[t - level] = true;
-				}
 			}
-			for (int i = 0; i < forbidTimes.Length; i++)
-			{
+			for (var i = 0; i < forbidTimes.Length; i++)
 				if (!forbidTimes[i])
 				{
 					Console.Out.WriteLine(i);
 					return;
 				}
-			}
 		}
 
-		static void Main13()
+		private static void Main13()
 		{
 			var lines = File.ReadAllLines(@"..\..\input13.txt");
 			var sev = 0;
 			foreach (var line in lines)
 			{
-				var split = line.Split(new[] { ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+				var split = line.Split(new[] {' ', ':'}, StringSplitOptions.RemoveEmptyEntries);
 				var level = int.Parse(split[0]);
 				var depth = int.Parse(split[1]);
 				var pos = level % (depth * 2 - 2);
@@ -1102,7 +1108,7 @@ namespace aoc
 			Console.Out.WriteLine(sev);
 		}
 
-		static void Main12_2()
+		private static void Main12_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input12.txt");
 			var re = new Regex(@"^(?<id>\d+) <-> (?<link>\d+)(?:, (?<link>\d+))*$", RegexOptions.Compiled);
@@ -1131,17 +1137,15 @@ namespace aoc
 				{
 					var cur = queue.Dequeue();
 					foreach (var link in gr[cur])
-					{
 						if (used.Add(link))
 							queue.Enqueue(link);
-					}
 				}
 				totalUsed.UnionWith(used);
 			}
 			Console.Out.WriteLine(groupCount);
 		}
 
-		static void Main12()
+		private static void Main12()
 		{
 			var lines = File.ReadAllLines(@"..\..\input12.txt");
 			var re = new Regex(@"^(?<id>\d+) <-> (?<link>\d+)(?:, (?<link>\d+))*$", RegexOptions.Compiled);
@@ -1163,19 +1167,17 @@ namespace aoc
 			{
 				var cur = queue.Dequeue();
 				foreach (var link in gr[cur])
-				{
 					if (used.Add(link))
 						queue.Enqueue(link);
-				}
 			}
 			Console.Out.WriteLine(used.Count);
 		}
 
-		static void Main11_2()
+		private static void Main11_2()
 		{
 			var input = File.ReadAllText(@"..\..\input11.txt").Trim();
 			var steps = input.Split(',');
-			var dirs = new[] { "n", "nw", "sw", "s", "se", "ne" };
+			var dirs = new[] {"n", "nw", "sw", "s", "se", "ne"};
 			var pos = new Coord(0, 0);
 			var max = 0;
 			foreach (var step in steps)
@@ -1189,11 +1191,11 @@ namespace aoc
 			Console.Out.WriteLine(max);
 		}
 
-		static void Main11()
+		private static void Main11()
 		{
 			var input = File.ReadAllText(@"..\..\input11.txt").Trim();
 			var steps = input.Split(',');
-			var dirs = new[] { "n", "nw", "sw", "s", "se", "ne" };
+			var dirs = new[] {"n", "nw", "sw", "s", "se", "ne"};
 			var pos = new Coord(0, 0);
 			foreach (var step in steps)
 			{
@@ -1203,7 +1205,7 @@ namespace aoc
 			Console.Out.WriteLine(pos.DistanceTo(new Coord(0, 0)));
 		}
 
-		static void Main10_2()
+		private static void Main10_2()
 		{
 			var input = "187,254,0,81,169,219,1,190,19,102,255,56,46,32,2,216";
 			var knotHash = KnotHash(input);
@@ -1221,15 +1223,14 @@ namespace aoc
 
 		private static byte[] KnotHash(string input)
 		{
-			var lens = input.Select(c => (int)c).Concat(new[] { 17, 31, 73, 47, 23 }).ToArray();
+			var lens = input.Select(c => (int) c).Concat(new[] {17, 31, 73, 47, 23}).ToArray();
 			var skip = 0;
 			var cur = 0;
 			var list = Enumerable.Range(0, 256).ToArray();
-			for (int k = 0; k < 64; k++)
-			{
+			for (var k = 0; k < 64; k++)
 				foreach (var len in lens)
 				{
-					for (int i = 0; i < len / 2; i++)
+					for (var i = 0; i < len / 2; i++)
 					{
 						var tmp = list[(cur + i) % list.Length];
 						list[(cur + i) % list.Length] = list[(cur + len - 1 - i) % list.Length];
@@ -1238,17 +1239,14 @@ namespace aoc
 					cur = (cur + len + skip) % list.Length;
 					skip++;
 				}
-			}
 			var dense = new byte[16];
-			for (int i = 0; i < 16; i++)
-			{
-				for (int k = 0; k < 16; k++)
-					dense[i] ^= (byte)list[i * 16 + k];
-			}
+			for (var i = 0; i < 16; i++)
+			for (var k = 0; k < 16; k++)
+				dense[i] ^= (byte) list[i * 16 + k];
 			return dense;
 		}
 
-		static void Main10()
+		private static void Main10()
 		{
 			var input = "187,254,0,81,169,219,1,190,19,102,255,56,46,32,2,216";
 			var lens = input.Split(',').Select(int.Parse).ToArray();
@@ -1257,7 +1255,7 @@ namespace aoc
 			var list = Enumerable.Range(0, 256).ToArray();
 			foreach (var len in lens)
 			{
-				for (int i = 0; i < len / 2; i++)
+				for (var i = 0; i < len / 2; i++)
 				{
 					var tmp = list[(cur + i) % list.Length];
 					list[(cur + i) % list.Length] = list[(cur + len - 1 - i) % list.Length];
@@ -1269,7 +1267,7 @@ namespace aoc
 			Console.Out.WriteLine(list[0] * list[1]);
 		}
 
-		static void Main9_2()
+		private static void Main9_2()
 		{
 			var input = File.ReadAllText(@"..\..\input9.txt").Trim();
 			var level = 0;
@@ -1322,7 +1320,7 @@ namespace aoc
 			Console.Out.WriteLine(score);
 		}
 
-		static void Main9()
+		private static void Main9()
 		{
 			var input = File.ReadAllText(@"..\..\input9.txt").Trim();
 			var level = 0;
@@ -1373,10 +1371,11 @@ namespace aoc
 			Console.Out.WriteLine(score);
 		}
 
-		static void Main8_2()
+		private static void Main8_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input8.txt");
-			var re = new Regex(@"^(?<r>\w+) (?<op>inc|dec) (?<v>-?\d+) if (?<cr>\w+) (?<cop><|>|<=|>=|==|!=) (?<cv>-?\d+)$", RegexOptions.Compiled);
+			var re = new Regex(@"^(?<r>\w+) (?<op>inc|dec) (?<v>-?\d+) if (?<cr>\w+) (?<cop><|>|<=|>=|==|!=) (?<cv>-?\d+)$",
+				RegexOptions.Compiled);
 			var registers = new ConcurrentDictionary<string, int>();
 			var max = 0;
 			foreach (var line in lines)
@@ -1438,10 +1437,11 @@ namespace aoc
 			}
 		}
 
-		static void Main8()
+		private static void Main8()
 		{
 			var lines = File.ReadAllLines(@"..\..\input8.txt");
-			var re = new Regex(@"^(?<r>\w+) (?<op>inc|dec) (?<v>-?\d+) if (?<cr>\w+) (?<cop><|>|<=|>=|==|!=) (?<cv>-?\d+)$", RegexOptions.Compiled);
+			var re = new Regex(@"^(?<r>\w+) (?<op>inc|dec) (?<v>-?\d+) if (?<cr>\w+) (?<cop><|>|<=|>=|==|!=) (?<cv>-?\d+)$",
+				RegexOptions.Compiled);
 			var registers = new ConcurrentDictionary<string, int>();
 			foreach (var line in lines)
 			{
@@ -1498,10 +1498,11 @@ namespace aoc
 			}
 		}
 
-		static void Main7_2()
+		private static void Main7_2()
 		{
 			var lines = File.ReadAllLines(@"..\..\input7.txt");
-			var re = new Regex(@"^(?<parent>\w+) \((?<weight>\d+)\)(?: -> ((?<child>\w+), )*(?<child>\w+))?$", RegexOptions.Compiled);
+			var re = new Regex(@"^(?<parent>\w+) \((?<weight>\d+)\)(?: -> ((?<child>\w+), )*(?<child>\w+))?$",
+				RegexOptions.Compiled);
 			var all = new HashSet<string>();
 			var nodes = new Dictionary<string, (int weight, string[] children)>();
 			var allChildren = new HashSet<string>();
@@ -1542,7 +1543,7 @@ namespace aoc
 			{
 				var weights = nodes[n].children
 					.GroupBy(c => totalWeights[c])
-					.Select(x => new { w = x.Key, cnt = x.Count() })
+					.Select(x => new {w = x.Key, cnt = x.Count()})
 					.ToList();
 				if (weights.Count <= 1)
 					return (null, 0);
@@ -1555,10 +1556,8 @@ namespace aoc
 					.Select(x => x.w)
 					.Last();
 				foreach (var c in nodes[n].children)
-				{
 					if (totalWeights[c] == wrongWeight)
 						return (c, validWeight);
-				}
 				return (null, 0);
 			}
 
@@ -1572,10 +1571,11 @@ namespace aoc
 			}
 		}
 
-		static void Main7()
+		private static void Main7()
 		{
 			var lines = File.ReadAllLines(@"..\..\input7.txt");
-			var re = new Regex(@"^(?<parent>\w+) \((?<weight>\d+)\)(?: -> ((?<child>\w+), )*(?<child>\w+))?$", RegexOptions.Compiled);
+			var re = new Regex(@"^(?<parent>\w+) \((?<weight>\d+)\)(?: -> ((?<child>\w+), )*(?<child>\w+))?$",
+				RegexOptions.Compiled);
 			var allChildren = new HashSet<string>();
 			var all = new HashSet<string>();
 			foreach (var line in lines)
@@ -1593,7 +1593,7 @@ namespace aoc
 			Console.Out.WriteLine(all.Single());
 		}
 
-		static void Main6_2()
+		private static void Main6_2()
 		{
 			var input = "4	1	15	12	0	9	9	5	5	8	7	3	14	5	12	3";
 			var banks = input.Split('\t').Select(uint.Parse).ToArray();
@@ -1607,10 +1607,8 @@ namespace aoc
 				var start = memory.Item2;
 				var val = banks[start];
 				banks[start] = 0;
-				for (int i = 1; i <= val; i++)
-				{
+				for (var i = 1; i <= val; i++)
 					banks[(start + i) % banks.Length]++;
-				}
 
 				result++;
 				memory = GetMemoryStatus(banks);
@@ -1622,7 +1620,7 @@ namespace aoc
 				var res = 0UL;
 				var max = 0UL;
 				var maxi = -1;
-				for (int i = 0; i < bs.Length; i++)
+				for (var i = 0; i < bs.Length; i++)
 				{
 					if (bs[i] > max)
 					{
@@ -1638,7 +1636,7 @@ namespace aoc
 			}
 		}
 
-		static void Main6()
+		private static void Main6()
 		{
 			var input = "4	1	15	12	0	9	9	5	5	8	7	3	14	5	12	3";
 			var banks = input.Split('\t').Select(uint.Parse).ToArray();
@@ -1650,10 +1648,8 @@ namespace aoc
 				var start = memory.Item2;
 				var val = banks[start];
 				banks[start] = 0;
-				for (int i = 1; i <= val; i++)
-				{
+				for (var i = 1; i <= val; i++)
 					banks[(start + i) % banks.Length]++;
-				}
 
 				result++;
 				memory = GetMemoryStatus(banks);
@@ -1665,7 +1661,7 @@ namespace aoc
 				var res = 0UL;
 				var max = 0UL;
 				var maxi = -1;
-				for (int i = 0; i < bs.Length; i++)
+				for (var i = 0; i < bs.Length; i++)
 				{
 					if (bs[i] > max)
 					{
@@ -1681,7 +1677,7 @@ namespace aoc
 			}
 		}
 
-		static void Main5_2()
+		private static void Main5_2()
 		{
 			var input = File.ReadAllLines(@"..\..\input5.txt").Select(int.Parse).ToArray();
 			var p = 0;
@@ -1699,7 +1695,7 @@ namespace aoc
 			Console.Out.WriteLine(c);
 		}
 
-		static void Main5()
+		private static void Main5()
 		{
 			var input = File.ReadAllLines(@"..\..\input5.txt").Select(int.Parse).ToArray();
 			var p = 0;
@@ -1712,51 +1708,54 @@ namespace aoc
 			Console.Out.WriteLine(c);
 		}
 
-		static void Main4_2()
+		private static void Main4_2()
 		{
 			bool IsValid(string l)
 			{
 				var used = new HashSet<string>();
-				var words = l.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				var words = l.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
 				return words.All(w => used.Add(new string(w.OrderBy(x => x).ToArray())));
 			}
 
 			var lines = File.ReadAllLines(@"..\..\input4.txt");
 			var validCount = 0;
 			foreach (var line in lines)
-			{
 				if (IsValid(line))
 					validCount++;
-			}
 			Console.Out.WriteLine(validCount);
 		}
 
-		static void Main4()
+		private static void Main4()
 		{
 			bool IsValid(string l)
 			{
 				var used = new HashSet<string>();
-				var words = l.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				var words = l.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
 				return words.All(w => used.Add(w));
 			}
 
 			var lines = File.ReadAllLines(@"..\..\input4.txt");
 			var validCount = 0;
 			foreach (var line in lines)
-			{
 				if (IsValid(line))
 					validCount++;
-			}
 			Console.Out.WriteLine(validCount);
 		}
 
-		static void Main3_2()
+		private static void Main3_2()
 		{
 			var input = 361527;
 			var table = new long[1000, 1000];
 
-			long Get(int gx, int gy) => table[gx + 500, gy + 500];
-			void Set(int gx, int gy, long gv) => table[gx + 500, gy + 500] = gv;
+			long Get(int gx, int gy)
+			{
+				return table[gx + 500, gy + 500];
+			}
+
+			void Set(int gx, int gy, long gv)
+			{
+				table[gx + 500, gy + 500] = gv;
+			}
 
 			Set(0, 0, 1);
 			var i = 0;
@@ -1767,8 +1766,8 @@ namespace aoc
 			var si = 0;
 			var sii = 0;
 			var total = 1;
-			var dx = new[] { 0, -1, 0, 1 };
-			var dy = new[] { -1, 0, 1, 0 };
+			var dx = new[] {0, -1, 0, 1};
+			var dy = new[] {-1, 0, 1, 0};
 			long res = 0;
 			while (res <= input)
 			{
@@ -1794,21 +1793,19 @@ namespace aoc
 					y += dy[si];
 				}
 				res = 0;
-				for (int dxx = -1; dxx <= 1; dxx++)
-				{
-					for (int dyy = -1; dyy <= 1; dyy++)
-						res += Get(x + dxx, y + dyy);
-				}
+				for (var dxx = -1; dxx <= 1; dxx++)
+				for (var dyy = -1; dyy <= 1; dyy++)
+					res += Get(x + dxx, y + dyy);
 				Set(x, y, res);
 			}
 
 			Console.Out.WriteLine(res);
 		}
 
-		static void Main3()
+		private static void Main3()
 		{
 			var input = 361527;
-			var n = (int)Math.Floor((Math.Sqrt(input - 1) - 1) / 2.0);
+			var n = (int) Math.Floor((Math.Sqrt(input - 1) - 1) / 2.0);
 			var side = 2 * (n + 1);
 			var pos = (input - (4 * n * n + 4 * n + 1) - 1) % side;
 			var y = n + 1;
@@ -1816,7 +1813,7 @@ namespace aoc
 			Console.Out.WriteLine(Math.Abs(x) + Math.Abs(y));
 		}
 
-		static void Main2_2()
+		private static void Main2_2()
 		{
 			var input = @"493	458	321	120	49	432	433	92	54	452	41	461	388	409	263	58
 961	98	518	188	958	114	1044	881	948	590	972	398	115	116	451	492
@@ -1852,7 +1849,7 @@ namespace aoc
 			Console.Out.WriteLine(res);
 		}
 
-		static void Main2()
+		private static void Main2()
 		{
 			var input = @"493	458	321	120	49	432	433	92	54	452	41	461	388	409	263	58
 961	98	518	188	958	114	1044	881	948	590	972	398	115	116	451	492
@@ -1880,30 +1877,28 @@ namespace aoc
 			Console.Out.WriteLine(res);
 		}
 
-		static void Main1_2()
+		private static void Main1_2()
 		{
-			var input = @"9513446799636685297929646689682997114316733445451534532351778534251427172168183621874641711534917291674333857423799375512628489423332297538215855176592633692631974822259161766238385922277893623911332569448978771948316155868781496698895492971356383996932885518732997624253678694279666572149831616312497994856288871586777793459926952491318336997159553714584541897294117487641872629796825583725975692264125865827534677223541484795877371955124463989228886498682421539667224963783616245646832154384756663251487668681425754536722827563651327524674183443696227523828832466473538347472991998913211857749878157579176457395375632995576569388455888156465451723693767887681392547189273391948632726499868313747261828186732986628365773728583387184112323696592536446536231376615949825166773536471531487969852535699774113163667286537193767515119362865141925612849443983484245268194842563154567638354645735331855896155142741664246715666899824364722914296492444672653852387389477634257768229772399416521198625393426443499223611843766134883441223328256883497423324753229392393974622181429913535973327323952241674979677481518733692544535323219895684629719868384266425386835539719237716339198485163916562434854579365958111931354576991558771236977242668756782139961638347251644828724786827751748399123668854393894787851872256667336215726674348886747128237416273154988619267824361227888751562445622387695218161341884756795223464751862965655559143779425283154533252573949165492138175581615176611845489857169132936848668646319955661492488428427435269169173654812114842568381636982389224236455633316898178163297452453296667661849622174541778669494388167451186352488555379581934999276412919598411422973399319799937518713422398874326665375216437246445791623283898584648278989674418242112957668397484671119761553847275799873495363759266296477844157237423239163559391553961176475377151369399646747881452252547741718734949967752564774161341784833521492494243662658471121369649641815562327698395293573991648351369767162642763475561544795982183714447737149239846151871434656618825566387329765118727515699213962477996399781652131918996434125559698427945714572488376342126989157872118279163127742349";
+			var input =
+				@"9513446799636685297929646689682997114316733445451534532351778534251427172168183621874641711534917291674333857423799375512628489423332297538215855176592633692631974822259161766238385922277893623911332569448978771948316155868781496698895492971356383996932885518732997624253678694279666572149831616312497994856288871586777793459926952491318336997159553714584541897294117487641872629796825583725975692264125865827534677223541484795877371955124463989228886498682421539667224963783616245646832154384756663251487668681425754536722827563651327524674183443696227523828832466473538347472991998913211857749878157579176457395375632995576569388455888156465451723693767887681392547189273391948632726499868313747261828186732986628365773728583387184112323696592536446536231376615949825166773536471531487969852535699774113163667286537193767515119362865141925612849443983484245268194842563154567638354645735331855896155142741664246715666899824364722914296492444672653852387389477634257768229772399416521198625393426443499223611843766134883441223328256883497423324753229392393974622181429913535973327323952241674979677481518733692544535323219895684629719868384266425386835539719237716339198485163916562434854579365958111931354576991558771236977242668756782139961638347251644828724786827751748399123668854393894787851872256667336215726674348886747128237416273154988619267824361227888751562445622387695218161341884756795223464751862965655559143779425283154533252573949165492138175581615176611845489857169132936848668646319955661492488428427435269169173654812114842568381636982389224236455633316898178163297452453296667661849622174541778669494388167451186352488555379581934999276412919598411422973399319799937518713422398874326665375216437246445791623283898584648278989674418242112957668397484671119761553847275799873495363759266296477844157237423239163559391553961176475377151369399646747881452252547741718734949967752564774161341784833521492494243662658471121369649641815562327698395293573991648351369767162642763475561544795982183714447737149239846151871434656618825566387329765118727515699213962477996399781652131918996434125559698427945714572488376342126989157872118279163127742349";
 			var len = input.Length;
 			input += input;
 			var res = 0;
-			for (int i = 0; i < len; i++)
-			{
+			for (var i = 0; i < len; i++)
 				if (input[i] == input[i + len / 2])
 					res += input[i] - '0';
-			}
 			Console.Out.WriteLine(res);
 		}
 
-		static void Main1()
+		private static void Main1()
 		{
-			var input = @"9513446799636685297929646689682997114316733445451534532351778534251427172168183621874641711534917291674333857423799375512628489423332297538215855176592633692631974822259161766238385922277893623911332569448978771948316155868781496698895492971356383996932885518732997624253678694279666572149831616312497994856288871586777793459926952491318336997159553714584541897294117487641872629796825583725975692264125865827534677223541484795877371955124463989228886498682421539667224963783616245646832154384756663251487668681425754536722827563651327524674183443696227523828832466473538347472991998913211857749878157579176457395375632995576569388455888156465451723693767887681392547189273391948632726499868313747261828186732986628365773728583387184112323696592536446536231376615949825166773536471531487969852535699774113163667286537193767515119362865141925612849443983484245268194842563154567638354645735331855896155142741664246715666899824364722914296492444672653852387389477634257768229772399416521198625393426443499223611843766134883441223328256883497423324753229392393974622181429913535973327323952241674979677481518733692544535323219895684629719868384266425386835539719237716339198485163916562434854579365958111931354576991558771236977242668756782139961638347251644828724786827751748399123668854393894787851872256667336215726674348886747128237416273154988619267824361227888751562445622387695218161341884756795223464751862965655559143779425283154533252573949165492138175581615176611845489857169132936848668646319955661492488428427435269169173654812114842568381636982389224236455633316898178163297452453296667661849622174541778669494388167451186352488555379581934999276412919598411422973399319799937518713422398874326665375216437246445791623283898584648278989674418242112957668397484671119761553847275799873495363759266296477844157237423239163559391553961176475377151369399646747881452252547741718734949967752564774161341784833521492494243662658471121369649641815562327698395293573991648351369767162642763475561544795982183714447737149239846151871434656618825566387329765118727515699213962477996399781652131918996434125559698427945714572488376342126989157872118279163127742349";
+			var input =
+				@"9513446799636685297929646689682997114316733445451534532351778534251427172168183621874641711534917291674333857423799375512628489423332297538215855176592633692631974822259161766238385922277893623911332569448978771948316155868781496698895492971356383996932885518732997624253678694279666572149831616312497994856288871586777793459926952491318336997159553714584541897294117487641872629796825583725975692264125865827534677223541484795877371955124463989228886498682421539667224963783616245646832154384756663251487668681425754536722827563651327524674183443696227523828832466473538347472991998913211857749878157579176457395375632995576569388455888156465451723693767887681392547189273391948632726499868313747261828186732986628365773728583387184112323696592536446536231376615949825166773536471531487969852535699774113163667286537193767515119362865141925612849443983484245268194842563154567638354645735331855896155142741664246715666899824364722914296492444672653852387389477634257768229772399416521198625393426443499223611843766134883441223328256883497423324753229392393974622181429913535973327323952241674979677481518733692544535323219895684629719868384266425386835539719237716339198485163916562434854579365958111931354576991558771236977242668756782139961638347251644828724786827751748399123668854393894787851872256667336215726674348886747128237416273154988619267824361227888751562445622387695218161341884756795223464751862965655559143779425283154533252573949165492138175581615176611845489857169132936848668646319955661492488428427435269169173654812114842568381636982389224236455633316898178163297452453296667661849622174541778669494388167451186352488555379581934999276412919598411422973399319799937518713422398874326665375216437246445791623283898584648278989674418242112957668397484671119761553847275799873495363759266296477844157237423239163559391553961176475377151369399646747881452252547741718734949967752564774161341784833521492494243662658471121369649641815562327698395293573991648351369767162642763475561544795982183714447737149239846151871434656618825566387329765118727515699213962477996399781652131918996434125559698427945714572488376342126989157872118279163127742349";
 			input += input[0];
 			var res = 0;
-			for (int i = 0; i < input.Length - 1; i++)
-			{
+			for (var i = 0; i < input.Length - 1; i++)
 				if (input[i] == input[i + 1])
 					res += input[i] - '0';
-			}
 			Console.Out.WriteLine(res);
 		}
 	}
