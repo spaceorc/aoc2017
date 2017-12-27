@@ -1357,16 +1357,10 @@ namespace aoc
 		{
 			var input = "187,254,0,81,169,219,1,190,19,102,255,56,46,32,2,216";
 			var knotHash = KnotHash(input);
-			var res = KnotHashToString(knotHash);
-			Console.Out.WriteLine(res);
-		}
-
-		private static string KnotHashToString(byte[] dense)
-		{
 			var res = "";
-			foreach (var d in dense)
+			foreach (var d in knotHash)
 				res += d.ToString("x2");
-			return res;
+			Console.Out.WriteLine(res);
 		}
 
 		private static byte[] KnotHash(string input)
