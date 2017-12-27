@@ -11,7 +11,324 @@ namespace aoc
 	{
 		static void Main()
 		{
-			Main20_2();
+			Main21_2();
+		}
+
+		static void Main21_2()
+		{
+			var lines = File.ReadAllLines(@"..\..\input21.txt");
+			var patterns = new SortedDictionary<bool[,], bool[,]>(Comparer<bool[,]>.Create(Compare));
+			foreach (var line in lines)
+			{
+				var split = line.Split(new[] { " => " }, StringSplitOptions.None);
+				var source = Normalize(Parse(split[0]));
+				var target = Parse(split[1]);
+				patterns.Add(source, target);
+			}
+			var current = Parse(".#./..#/###");
+			for (int i = 0; i < 18; i++)
+			{
+				current = Join(Split(current)
+					.Select(s => patterns[s]).ToList());
+			}
+			var r = 0;
+			for (int i = 0; i < current.GetLength(0); i++)
+			{
+				for (int j = 0; j < current.GetLength(1); j++)
+				{
+					if (current[i, j])
+						r++;
+				}
+			}
+			Console.Out.WriteLine(r);
+
+			void Print(bool[,] rows)
+			{
+				for (int i = 0; i < rows.GetLength(0); i++)
+				{
+					for (int j = 0; j < rows.GetLength(0); j++)
+					{
+						Console.Out.Write(rows[i, j] ? '#' : '.');
+					}
+					Console.Out.WriteLine();
+				}
+			}
+
+			bool[,] Join(List<bool[,]> rowses)
+			{
+				var size = (int)Math.Round(Math.Sqrt(rowses.Count));
+				var result = new bool[size * rowses[0].GetLength(0), size * rowses[0].GetLength(0)];
+				for (int i = 0; i < size; i++)
+					for (int j = 0; j < size; j++)
+					{
+						for (int ii = 0; ii < rowses[0].GetLength(0); ii++)
+							for (int jj = 0; jj < rowses[0].GetLength(0); jj++)
+							{
+								result[i * rowses[0].GetLength(0) + ii,
+										j * rowses[0].GetLength(0) + jj] = rowses[i * size + j][ii, jj];
+							}
+					}
+				return result;
+			}
+
+			List<bool[,]> Split(bool[,] rows)
+			{
+				List<bool[,]> result = new List<bool[,]>();
+				if (rows.GetLength(0) % 2 == 0)
+				{
+					for (int i = 0; i < rows.GetLength(0); i += 2)
+						for (int j = 0; j < rows.GetLength(0); j += 2)
+						{
+							result.Add(Normalize(new[,]
+							{
+								{rows[i, j], rows[i, j + 1]},
+								{rows[i + 1, j], rows[i + 1, j + 1]}
+							}));
+						}
+				}
+				else
+				{
+					for (int i = 0; i < rows.GetLength(0); i += 3)
+						for (int j = 0; j < rows.GetLength(0); j += 3)
+						{
+							result.Add(Normalize(new[,]
+							{
+								{rows[i, j], rows[i, j + 1], rows[i, j + 2]},
+								{rows[i+1, j], rows[i+1, j + 1], rows[i+1, j + 2]},
+								{rows[i+2, j], rows[i+2, j + 1], rows[i+2, j + 2]}
+							}));
+						}
+				}
+				return result;
+			}
+
+			bool[,] Normalize(bool[,] rows)
+			{
+				var res = rows;
+				bool[,] min = null;
+				for (int i = 0; i < 2; i++)
+				{
+					res = Flip(res);
+					for (int j = 0; j < 4; j++)
+					{
+						res = Rotate(res);
+						if (min == null || Compare(res, min) < 0)
+							min = res;
+					}
+				}
+				return min;
+			}
+
+			int Compare(bool[,] a, bool[,] b)
+			{
+				if (a.Length < b.Length)
+					return -1;
+				if (a.Length > b.Length)
+					return 1;
+				var comparer = Comparer<bool>.Default;
+				for (int i = 0; i < a.GetLength(0); i++)
+					for (int j = 0; j < a.GetLength(0); j++)
+					{
+						var compare = comparer.Compare(a[i, j], b[i, j]);
+						if (compare != 0)
+							return compare;
+					}
+				return 0;
+			}
+
+			bool[,] Rotate(bool[,] rows)
+			{
+				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
+				for (int i = 0; i < rows.GetLength(0); i++)
+					for (int j = 0; j < rows.GetLength(0); j++)
+					{
+						res[i, j] = rows[j, rows.GetLength(0) - i - 1];
+					}
+				return res;
+			}
+
+			bool[,] Flip(bool[,] rows)
+			{
+				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
+				for (int i = 0; i < rows.GetLength(0); i++)
+					for (int j = 0; j < rows.GetLength(0); j++)
+					{
+						res[i, j] = rows[i, rows.GetLength(0) - j - 1];
+					}
+				return res;
+			}
+
+			bool[,] Parse(string source)
+			{
+				var rows = source.Split('/');
+				var res = new bool[rows.Length, rows.Length];
+				for (int i = 0; i < rows.Length; i++)
+					for (int j = 0; j < rows.Length; j++)
+					{
+						res[i, j] = rows[i][j] == '#';
+					}
+				return res;
+			}
+		}
+
+		static void Main21()
+		{
+			var lines = File.ReadAllLines(@"..\..\input21.txt");
+			var patterns = new SortedDictionary<bool[,], bool[,]>(Comparer<bool[,]>.Create(Compare));
+			foreach (var line in lines)
+			{
+				var split = line.Split(new[] { " => " }, StringSplitOptions.None);
+				var source = Normalize(Parse(split[0]));
+				var target = Parse(split[1]);
+				patterns.Add(source, target);
+			}
+			var current = Parse(".#./..#/###");
+			Print(current);
+			for (int i = 0; i < 5; i++)
+			{
+				current = Join(Split(current)
+					.Select(s => patterns[s]).ToList());
+				Console.WriteLine();
+				Print(current);
+			}
+			var r = 0;
+			for (int i = 0; i < current.GetLength(0); i++)
+			{
+				for (int j = 0; j < current.GetLength(1); j++)
+				{
+					if (current[i, j])
+						r++;
+				}
+			}
+			Console.Out.WriteLine(r);
+
+			void Print(bool[,] rows)
+			{
+				for (int i = 0; i < rows.GetLength(0); i++)
+				{
+					for (int j = 0; j < rows.GetLength(0); j++)
+					{
+						Console.Out.Write(rows[i, j] ? '#' : '.');
+					}
+					Console.Out.WriteLine();
+				}
+			}
+
+			bool[,] Join(List<bool[,]> rowses)
+			{
+				var size = (int)Math.Round(Math.Sqrt(rowses.Count));
+				var result = new bool[size * rowses[0].GetLength(0), size * rowses[0].GetLength(0)];
+				for (int i = 0; i < size; i++)
+					for (int j = 0; j < size; j++)
+					{
+						for (int ii = 0; ii < rowses[0].GetLength(0); ii++)
+							for (int jj = 0; jj < rowses[0].GetLength(0); jj++)
+							{
+								result[i * rowses[0].GetLength(0) + ii,
+										j * rowses[0].GetLength(0) + jj] = rowses[i * size + j][ii, jj];
+							}
+					}
+				return result;
+			}
+
+			List<bool[,]> Split(bool[,] rows)
+			{
+				List<bool[,]> result = new List<bool[,]>();
+				if (rows.GetLength(0) % 2 == 0)
+				{
+					for (int i = 0; i < rows.GetLength(0); i += 2)
+						for (int j = 0; j < rows.GetLength(0); j += 2)
+						{
+							result.Add(Normalize(new[,]
+							{
+								{rows[i, j], rows[i, j + 1]},
+								{rows[i + 1, j], rows[i + 1, j + 1]}
+							}));
+						}
+				}
+				else
+				{
+					for (int i = 0; i < rows.GetLength(0); i += 3)
+						for (int j = 0; j < rows.GetLength(0); j += 3)
+						{
+							result.Add(Normalize(new[,]
+							{
+								{rows[i, j], rows[i, j + 1], rows[i, j + 2]},
+								{rows[i+1, j], rows[i+1, j + 1], rows[i+1, j + 2]},
+								{rows[i+2, j], rows[i+2, j + 1], rows[i+2, j + 2]}
+							}));
+						}
+				}
+				return result;
+			}
+
+			bool[,] Normalize(bool[,] rows)
+			{
+				var res = rows;
+				bool[,] min = null;
+				for (int i = 0; i < 2; i++)
+				{
+					res = Flip(res);
+					for (int j = 0; j < 4; j++)
+					{
+						res = Rotate(res);
+						if (min == null || Compare(res, min) < 0)
+							min = res;
+					}
+				}
+				return min;
+			}
+
+			int Compare(bool[,] a, bool[,] b)
+			{
+				if (a.Length < b.Length)
+					return -1;
+				if (a.Length > b.Length)
+					return 1;
+				var comparer = Comparer<bool>.Default;
+				for (int i = 0; i < a.GetLength(0); i++)
+					for (int j = 0; j < a.GetLength(0); j++)
+					{
+						var compare = comparer.Compare(a[i, j], b[i, j]);
+						if (compare != 0)
+							return compare;
+					}
+				return 0;
+			}
+
+			bool[,] Rotate(bool[,] rows)
+			{
+				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
+				for (int i = 0; i < rows.GetLength(0); i++)
+					for (int j = 0; j < rows.GetLength(0); j++)
+					{
+						res[i, j] = rows[j, rows.GetLength(0) - i - 1];
+					}
+				return res;
+			}
+
+			bool[,] Flip(bool[,] rows)
+			{
+				var res = new bool[rows.GetLength(0), rows.GetLength(0)];
+				for (int i = 0; i < rows.GetLength(0); i++)
+					for (int j = 0; j < rows.GetLength(0); j++)
+					{
+						res[i, j] = rows[i, rows.GetLength(0) - j - 1];
+					}
+				return res;
+			}
+
+			bool[,] Parse(string source)
+			{
+				var rows = source.Split('/');
+				var res = new bool[rows.Length, rows.Length];
+				for (int i = 0; i < rows.Length; i++)
+					for (int j = 0; j < rows.Length; j++)
+					{
+						res[i, j] = rows[i][j] == '#';
+					}
+				return res;
+			}
 		}
 
 		static void Main20_2()
@@ -93,7 +410,7 @@ namespace aoc
 					return new List<long>();
 				if (d == 0)
 				{
-					if (-b % (2*a) == 0 && -b / (2 * a) >= 0)
+					if (-b % (2 * a) == 0 && -b / (2 * a) >= 0)
 						return new List<long> { -b / (2 * a) };
 					return new List<long>();
 				}
@@ -101,7 +418,7 @@ namespace aoc
 				if (sqt * sqt == d)
 				{
 					var result = new List<long>();
-					if ((-b + sqt) % (2*a) == 0 && (-b + sqt) / (2 * a) >= 0)
+					if ((-b + sqt) % (2 * a) == 0 && (-b + sqt) / (2 * a) >= 0)
 						result.Add((-b + sqt) / (2 * a));
 					if ((-b - sqt) % (2 * a) == 0 && (-b - sqt) / (2 * a) >= 0)
 						result.Add((-b - sqt) / (2 * a));
